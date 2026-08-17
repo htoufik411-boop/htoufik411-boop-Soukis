@@ -1,10 +1,12 @@
 import { openMyOrders } from './user-orders-panel.js';
 import { renderAdminPanel } from './admin-panel.js';
 import { openSellModal } from './sell-ui.js';
+import { installI18n } from './i18n.js';
 
 export function installSoukisIntegration({ openModal, closeModal }) {
   if (document.documentElement.dataset.soukisIntegrationInstalled === 'true') return;
   document.documentElement.dataset.soukisIntegrationInstalled = 'true';
+  installI18n();
 
   document.addEventListener('click', async (event) => {
     const actionButton = event.target.closest('[data-soukis-action]');
