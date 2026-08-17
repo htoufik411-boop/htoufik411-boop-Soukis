@@ -1,6 +1,5 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 import { SOUKIS_CONFIG } from './app-config.js';
-import { addToCart } from './cart-ui.js';
 
 const supabase = createClient(SOUKIS_CONFIG.supabaseUrl, SOUKIS_CONFIG.supabasePublishableKey);
 let listings = [];
@@ -25,15 +24,6 @@ export function installProductsUI() {
     else if (sort?.value !== 'price-asc' && sort?.value !== 'price-desc') items.sort((a,b) => new Date(b.created_at||0)-new Date(a.created_at||0));
     if (count) count.textContent = `${items.length} منتج`;
     grid.innerHTML = items.length ? items.map(card).join('') : '<div class="empty">لا توجد منتجات مطابقة حاليًا.</div>';
-    grid.querySelectorAll('[data-add-listing]').forEach(button => button.addEventListener('click', async () => {
-      const id = button.dataset.addListing;
-      button.disabled = true;
-      const result = await addToCart(id, 1);
-      button.disabled = false;
-      if (result.ok) { button.textContent = '✓ تمت الإضافة'; setTimeout(() => button.textContent = '🛒 أضف إلى السلة', 1200); }
-      else if (result.reason === 'auth_required') document.querySelector('#authBtn')?.click();
-      else button.textContent = 'تعذر الإضافة';
-    }));
   };
 
   search?.addEventListener('input', render);
