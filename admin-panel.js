@@ -1,53 +1,15 @@
 import { getAdminOrders, updateOrderStatus } from './admin-service.js';
+import { getCurrentLanguage } from './i18n.js';
 
-const STATUS_LABELS = {
-  pending: 'قيد الانتظار',
-  confirmed: 'مؤكد',
-  shipped: 'تم الشحن',
-  completed: 'مكتمل',
-  cancelled: 'ملغى'
-};
+const labels={ar:{pending:'قيد الانتظار',confirmed:'مؤكد',shipped:'تم الشحن',completed:'مكتمل',cancelled:'ملغى',loading:'جاري تحميل لوحة الإدارة…',denied:'الوصول إلى لوحة الإدارة غير متاح.',title:'إدارة الطلبات',count:'طلب',customer:'العميل',phone:'الهاتف',address:'العنوان',total:'الإجمالي',state:'حالة الطلب',none:'لا توجد طلبات حتى الآن.',fail:'تعذر تحديث حالة الطلب.'},fr:{pending:'En attente',confirmed:'Confirmée',shipped:'Expédiée',completed:'Terminée',cancelled:'Annulée',loading:'Chargement de l’administration…',denied:'Accès à l’administration indisponible.',title:'Gestion des commandes',count:'commande',customer:'Client',phone:'Téléphone',address:'Adresse',total:'Total',state:'Statut de la commande',none:'Aucune commande pour le moment.',fail:'Impossible de mettre à jour le statut.'},en:{pending:'Pending',confirmed:'Confirmed',shipped:'Shipped',completed:'Completed',cancelled:'Cancelled',loading:'Loading admin…',denied:'Admin access is unavailable.',title:'Order management',count:'order',customer:'Customer',phone:'Phone',address:'Address',total:'Total',state:'Order status',none:'No orders yet.',fail:'Could not update order status.'}};
+const L=()=>labels[getCurrentLanguage()]||labels.ar;
 
-export async function renderAdminPanel(container) {
-  if (!container) return;
-  container.innerHTML = '<p>جاري تحميل لوحة الإدارة…</p>';
-  const result = await getAdminOrders();
-  if (!result.ok) {
-    container.innerHTML = '<div class="msg">الوصول إلى لوحة الإدارة غير متاح.</div>';
-    return;
-  }
-  container.innerHTML = `
-    <div class="admin-head"><div><small>Soukis Admin</small><h2>إدارة الطلبات</h2></div><span class="pill">${result.orders.length} طلب</span></div>
-    ${result.orders.length ? result.orders.map(order => `
-    <article class="msg admin-order" data-order-id="${escapeHtml(order.id)}">
-      <strong>طلب #${escapeHtml(order.id)}</strong>
-      <div>العميل: ${escapeHtml(order.shipping_name || '—')}</div>
-      <div>الهاتف: ${escapeHtml(order.shipping_phone || '—')}</div>
-      <div>العنوان: ${escapeHtml(order.shipping_address || '—')}</div>
-      <div>الإجمالي: ${Number(order.total || 0).toLocaleString('fr-DZ')} ${escapeHtml(order.currency || 'DA')}</div>
-      <select class="admin-status" aria-label="حالة الطلب">
-        ${Object.entries(STATUS_LABELS).map(([value, label]) => `<option value="${value}" ${value === order.status ? 'selected' : ''}>${label}</option>`).join('')}
-      </select>
-    </article>`).join('') : '<div class="msg">لا توجد طلبات حتى الآن.</div>'}`;
-
-  container.querySelectorAll('.admin-status').forEach(select => {
-    select.addEventListener('change', async () => {
-      const orderId = select.closest('.admin-order')?.dataset.orderId;
-      const previous = select.dataset.previous || select.value;
-      select.disabled = true;
-      const updated = await updateOrderStatus(orderId, select.value);
-      select.disabled = false;
-      if (!updated.ok) {
-        select.value = previous;
-        alert('تعذر تحديث حالة الطلب.');
-      } else {
-        select.dataset.previous = select.value;
-      }
-    });
-    select.dataset.previous = select.value;
-  });
+export async function renderAdminPanel(container){
+  if(!container)return; const l=L(); container.innerHTML=`<p>${l.loading}</p>`;
+  const result=await getAdminOrders();
+  if(!result.ok){container.innerHTML=`<div class="msg">${l.denied}</div>`;return;}
+  const locale=getCurrentLanguage()==='ar'?'ar-DZ':getCurrentLanguage()==='fr'?'fr-FR':'en-US';
+  container.innerHTML=`<div class="admin-head"><div><small>Soukis Admin</small><h2>${l.title}</h2></div><span class="pill">${result.orders.length} ${l.count}</span></div>${result.orders.length?result.orders.map(order=>`<article class="msg admin-order" data-order-id="${escapeHtml(order.id)}"><strong>${getCurrentLanguage()==='ar'?'طلب':getCurrentLanguage()==='fr'?'Commande':'Order'} #${escapeHtml(order.id)}</strong><div>${l.customer}: ${escapeHtml(order.shipping_name||'—')}</div><div>${l.phone}: ${escapeHtml(order.shipping_phone||'—')}</div><div>${l.address}: ${escapeHtml(order.shipping_address||'—')}</div><div>${l.total}: ${Number(order.total||0).toLocaleString(locale)} ${escapeHtml(order.currency||'DA')}</div><select class="admin-status" aria-label="${l.state}">${Object.entries({pending:l.pending,confirmed:l.confirmed,shipped:l.shipped,completed:l.completed,cancelled:l.cancelled}).map(([value,label])=>`<option value="${value}" ${value===order.status?'selected':''}>${label}</option>`).join('')}</select></article>`).join(''):`<div class="msg">${l.none}</div>`}`;
+  container.querySelectorAll('.admin-status').forEach(select=>{select.addEventListener('change',async()=>{const orderId=select.closest('.admin-order')?.dataset.orderId;const previous=select.dataset.previous||select.value;select.disabled=true;const updated=await updateOrderStatus(orderId,select.value);select.disabled=false;if(!updated.ok){select.value=previous;alert(l.fail);}else select.dataset.previous=select.value;});select.dataset.previous=select.value;});
 }
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
