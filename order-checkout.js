@@ -24,8 +24,8 @@ export function openCheckout(openModal, closeModal) {
     if (result.ok) {
       message.textContent = `تم إنشاء الطلب #${result.order.id}`;
       form.reset();
+      window.dispatchEvent(new CustomEvent('soukis:order-created', { detail: result.order }));
       setTimeout(closeModal, 900);
-      window.dispatchEvent(new CustomEvent('sou kis:order-created', { detail: result.order }));
     } else {
       message.textContent = result.reason === 'empty_cart' ? 'السلة فارغة.' : 'تعذر إنشاء الطلب. حاول مرة أخرى.';
     }
