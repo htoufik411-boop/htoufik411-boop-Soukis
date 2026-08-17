@@ -1,5 +1,13 @@
 import { getAdminOrders, updateOrderStatus } from './admin-service.js';
 
+const STATUS_LABELS = {
+  pending: 'قيد الانتظار',
+  confirmed: 'مؤكد',
+  shipped: 'تم الشحن',
+  completed: 'مكتمل',
+  cancelled: 'ملغى'
+};
+
 export async function renderAdminPanel(container) {
   if (!container) return;
   container.innerHTML = '<p>جاري تحميل لوحة الإدارة…</p>';
@@ -18,7 +26,7 @@ export async function renderAdminPanel(container) {
       <div>العنوان: ${escapeHtml(order.shipping_address || '—')}</div>
       <div>الإجمالي: ${Number(order.total || 0).toLocaleString('fr-DZ')} ${escapeHtml(order.currency || 'DA')}</div>
       <select class="admin-status" aria-label="حالة الطلب">
-        ${['pending','confirmed','shipped','delivered','cancelled'].map(s => `<option value="${s}" ${s === order.status ? 'selected' : ''}>${s}</option>`).join('')}
+        ${Object.entries(STATUS_LABELS).map(([value, label]) => `<option value="${value}" ${value === order.status ? 'selected' : ''}>${label}</option>`).join('')}
       </select>
     </article>`).join('') : '<div class="msg">لا توجد طلبات حتى الآن.</div>'}`;
 
