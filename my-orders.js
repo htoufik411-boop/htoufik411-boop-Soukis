@@ -9,7 +9,7 @@ export async function getMyOrders() {
 
   const { data, error } = await supabase
     .from('orders')
-    .select('id, status, total_amount, shipping_name, shipping_phone, shipping_address, created_at, order_items(id, listing_id, quantity, unit_price, listings(title, name))')
+    .select('id, status, total, currency, shipping_name, shipping_phone, shipping_address, created_at, order_items(id, listing_id, title, quantity, unit_price, listings(title, name))')
     .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
@@ -26,7 +26,7 @@ export function renderMyOrders(container, orders) {
     <article class="msg" style="margin-bottom:10px">
       <strong>طلب #${escapeHtml(order.id)}</strong>
       <div>الحالة: ${escapeHtml(order.status || 'pending')}</div>
-      <div>الإجمالي: ${Number(order.total_amount || 0).toLocaleString('fr-DZ')} DA</div>
+      <div>الإجمالي: ${Number(order.total || 0).toLocaleString('fr-DZ')} ${escapeHtml(order.currency || 'DZD')}</div>
       <div>العنوان: ${escapeHtml(order.shipping_address || '')}</div>
     </article>`).join('');
 }
