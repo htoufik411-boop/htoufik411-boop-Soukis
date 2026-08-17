@@ -17,7 +17,8 @@ export async function getAdminOrders() {
 }
 
 export async function updateOrderStatus(orderId, status) {
-  const allowed = ['pending','confirmed','shipped','delivered','cancelled'];
+  // Keep the client-side allow-list aligned with the database CHECK constraint.
+  const allowed = ['pending','confirmed','shipped','completed','cancelled'];
   if (!allowed.includes(status)) return { ok:false, reason:'invalid_status' };
   if (!(await isAdmin())) return { ok:false, reason:'admin_required' };
   const { data, error } = await supabase.from('orders').update({status}).eq('id',orderId).select('*').single();
