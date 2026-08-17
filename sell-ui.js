@@ -29,7 +29,7 @@ export async function openSellModal(openModal, closeModal, onCreated = () => {})
   const message = document.querySelector('#sellMessage');
   form?.addEventListener('submit', async event => {
     event.preventDefault();
-    const submit = form.querySelector('button[type="submit"]');
+    const submit = form.querySelector('button[type="submit"]);
     submit.disabled = true;
     message.hidden = false;
     message.textContent = 'جارٍ نشر المنتج…';
@@ -52,6 +52,7 @@ export async function openSellModal(openModal, closeModal, onCreated = () => {})
       return;
     }
     message.textContent = 'تم نشر المنتج بنجاح ✓';
+    window.dispatchEvent(new CustomEvent('soukis:listing-created'));
     onCreated();
     setTimeout(closeModal, 700);
   });
