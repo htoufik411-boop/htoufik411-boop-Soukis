@@ -1,0 +1,31 @@
+name: Soukis validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Validate required files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in index.html app-config.js orders-service.js order-checkout.js my-orders.js user-orders-panel.js admin-service.js admin-panel.js auth-admin-ui.js; do
+            test -f "$f" || { echo "Missing required file: $f"; exit 1; }
+          done
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          for f in *.js; do
+            node --check "$f"
+          done
