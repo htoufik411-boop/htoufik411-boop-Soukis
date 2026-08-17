@@ -17,7 +17,7 @@ export async function createOrderFromCart({ shippingName, shippingPhone, shippin
   const total = items.reduce((sum, item) => sum + Number(item.listings?.price || 0) * Number(item.quantity || 0), 0);
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .insert({ user_id: user.id, total_amount: total, status: 'pending', shipping_name: shippingName || null, shipping_phone: shippingPhone || null, shipping_address: shippingAddress || null })
+    .insert({ user_id: user.id, total, currency: 'DZD', status: 'pending', shipping_name: shippingName || null, shipping_phone: shippingPhone || null, shipping_address: shippingAddress || null })
     .select('*')
     .single();
   if (orderError) return { ok: false, error: orderError };
