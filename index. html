@@ -1,0 +1,1384 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="description"
+        content="Soukis - منصة عالمية للشراء والبيع">
+
+  <meta name="theme-color" content="#0f172a">
+
+  <title>Soukis — السوق العالمي</title>
+
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --surface: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --border: #e5e7eb;
+      --dark: #0f172a;
+      --radius: 20px;
+      --shadow: 0 15px 40px rgba(15, 23, 42, .08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family:
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Arial,
+        sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button,
+    a {
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    a {
+      text-decoration: none;
+      color: inherit;
+    }
+
+    /* HEADER */
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(255,255,255,.94);
+      backdrop-filter: blur(15px);
+      border-bottom: 1px solid var(--border);
+
+      min-height: 72px;
+      padding: 12px 5%;
+
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 900;
+      letter-spacing: -1px;
+    }
+
+    .logo span {
+      color: var(--primary);
+    }
+
+    nav {
+      display: flex;
+      gap: 28px;
+      color: #4b5563;
+      font-weight: 700;
+    }
+
+    nav a:hover {
+      color: var(--primary);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    select,
+    input {
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 11px 14px;
+      outline: none;
+    }
+
+    select:focus,
+    input:focus {
+      border-color: var(--primary);
+    }
+
+    .admin-btn {
+      border: 0;
+      background: var(--dark);
+      color: white;
+      padding: 11px 18px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .admin-btn:hover {
+      background: #1e293b;
+    }
+
+    /* HERO */
+
+    .hero {
+      width: 90%;
+      max-width: 1200px;
+      margin: 45px auto 30px;
+
+      min-height: 430px;
+      padding: 60px;
+
+      border-radius: 32px;
+      background:
+        radial-gradient(circle at 15% 20%,
+          rgba(59,130,246,.35),
+          transparent 35%),
+        linear-gradient(135deg, #0f172a, #172554);
+
+      color: white;
+
+      display: grid;
+      grid-template-columns: 1.3fr .7fr;
+      align-items: center;
+      gap: 50px;
+
+      overflow: hidden;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      color: #93c5fd;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .hero h1 {
+      font-size: clamp(40px, 6vw, 72px);
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 22px;
+    }
+
+    .hero p {
+      color: #cbd5e1;
+      max-width: 650px;
+      font-size: 19px;
+    }
+
+    .hero-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 30px;
+    }
+
+    .primary,
+    .secondary {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 13px 22px;
+      border-radius: 13px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    .primary {
+      border: 0;
+      background: white;
+      color: var(--dark);
+    }
+
+    .primary:hover {
+      transform: translateY(-1px);
+    }
+
+    .secondary {
+      border: 1px solid rgba(255,255,255,.25);
+      color: white;
+      background: rgba(255,255,255,.08);
+    }
+
+    .hero-art {
+      min-height: 260px;
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+
+      border: 1px solid rgba(255,255,255,.15);
+      border-radius: 30px;
+
+      background: rgba(255,255,255,.06);
+      box-shadow: inset 0 0 80px rgba(255,255,255,.04);
+    }
+
+    .hero-art .symbol {
+      font-size: 90px;
+      margin-bottom: 5px;
+    }
+
+    .hero-art strong {
+      font-size: 32px;
+    }
+
+    .hero-art span {
+      color: #93c5fd;
+    }
+
+    /* SEARCH */
+
+    .search-box {
+      width: 90%;
+      max-width: 1200px;
+      margin: 25px auto;
+
+      padding: 15px;
+
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+
+      box-shadow: var(--shadow);
+
+      display: grid;
+      grid-template-columns: 1fr 190px 160px;
+      gap: 10px;
+    }
+
+    .search-box input {
+      width: 100%;
+    }
+
+    /* SECTIONS */
+
+    section.content {
+      width: 90%;
+      max-width: 1200px;
+      margin: 70px auto;
+    }
+
+    .section-header {
+      margin-bottom: 25px;
+    }
+
+    .section-header h2 {
+      font-size: 32px;
+    }
+
+    .section-header small {
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    /* CATEGORIES */
+
+    .categories {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+
+    .category {
+      border: 1px solid var(--border);
+      background: white;
+      border-radius: var(--radius);
+      padding: 30px 20px;
+
+      cursor: pointer;
+
+      text-align: center;
+      transition: .2s;
+
+      box-shadow: 0 5px 20px rgba(15,23,42,.04);
+    }
+
+    .category:hover {
+      transform: translateY(-4px);
+      border-color: #bfdbfe;
+      box-shadow: var(--shadow);
+    }
+
+    .category .icon {
+      display: block;
+      font-size: 38px;
+      margin-bottom: 10px;
+    }
+
+    .category strong {
+      display: block;
+    }
+
+    /* PRODUCTS */
+
+    .products-header {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    #resultCount {
+      color: var(--muted);
+    }
+
+    .products {
+      display: grid;
+      grid-template-columns:
+        repeat(4, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .product {
+      background: white;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: 0 5px 20px rgba(15,23,42,.04);
+      transition: .2s;
+    }
+
+    .product:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow);
+    }
+
+    .product-image {
+      height: 190px;
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      background:
+        linear-gradient(135deg,
+          #eff6ff,
+          #eef2ff);
+
+      font-size: 60px;
+    }
+
+    .product-body {
+      padding: 17px;
+    }
+
+    .product-category {
+      font-size: 12px;
+      color: var(--primary);
+      font-weight: 800;
+    }
+
+    .product h3 {
+      margin: 5px 0;
+      font-size: 18px;
+    }
+
+    .product-price {
+      font-size: 20px;
+      font-weight: 900;
+      margin-top: 10px;
+    }
+
+    .product-location {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .product button {
+      width: 100%;
+      border: 0;
+      margin-top: 13px;
+      padding: 10px;
+      border-radius: 11px;
+      background: var(--dark);
+      color: white;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    /* FOOTER */
+
+    footer {
+      margin-top: 80px;
+      padding: 35px 5%;
+      background: var(--dark);
+      color: #cbd5e1;
+
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    footer strong {
+      color: white;
+    }
+
+    /* MODAL */
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      z-index: 500;
+
+      background: rgba(15,23,42,.65);
+      backdrop-filter: blur(5px);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      padding: 20px;
+    }
+
+    .modal[hidden] {
+      display: none;
+    }
+
+    .modal-box {
+      width: min(520px, 100%);
+      background: white;
+      border-radius: 24px;
+      padding: 30px;
+      position: relative;
+      box-shadow: 0 30px 80px rgba(0,0,0,.2);
+    }
+
+    .close {
+      position: absolute;
+      top: 12px;
+      left: 15px;
+
+      border: 0;
+      background: #f1f5f9;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .modal-box h2 {
+      margin-bottom: 18px;
+    }
+
+    .form {
+      display: grid;
+      gap: 12px;
+    }
+
+    .form input,
+    .form select,
+    .form textarea {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      font: inherit;
+    }
+
+    .form textarea {
+      min-height: 100px;
+      resize: vertical;
+    }
+
+    .form button {
+      border: 0;
+      background: var(--primary);
+      color: white;
+      border-radius: 12px;
+      padding: 13px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+
+    /* TOAST */
+
+    #toast {
+      position: fixed;
+      bottom: 25px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+
+      background: var(--dark);
+      color: white;
+
+      padding: 12px 20px;
+      border-radius: 12px;
+
+      opacity: 0;
+      transition: .3s;
+      z-index: 1000;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* MOBILE */
+
+    @media (max-width: 900px) {
+      header {
+        flex-wrap: wrap;
+      }
+
+      nav {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+      }
+
+      .hero {
+        grid-template-columns: 1fr;
+        padding: 35px 25px;
+      }
+
+      .hero-art {
+        min-height: 180px;
+      }
+
+      .search-box {
+        grid-template-columns: 1fr;
+      }
+
+      .categories {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .products {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 560px) {
+      header {
+        padding: 10px 4%;
+      }
+
+      .logo {
+        font-size: 24px;
+      }
+
+      .header-actions select {
+        max-width: 105px;
+      }
+
+      .admin-btn {
+        padding: 9px 12px;
+      }
+
+      .hero {
+        width: 94%;
+        margin-top: 20px;
+      }
+
+      section.content {
+        width: 94%;
+      }
+
+      .categories,
+      .products {
+        grid-template-columns: 1fr;
+      }
+
+      .products-header {
+        align-items: start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+
+  <a href="#" class="logo">
+    Soukis<span>•</span>
+  </a>
+
+  <nav>
+    <a href="#products" data-i18n="shop">المتجر</a>
+    <a href="#categories" data-i18n="categories">الفئات</a>
+  </nav>
+
+  <div class="header-actions">
+
+    <select id="language" aria-label="Language">
+      <option value="ar">العربية</option>
+      <option value="fr">Français</option>
+      <option value="en">English</option>
+    </select>
+
+    <button class="admin-btn" id="adminBtn">
+      Admin
+    </button>
+
+  </div>
+
+</header>
+
+
+<main>
+
+  <section class="hero">
+
+    <div>
+
+      <span class="eyebrow" data-i18n="eyebrow">
+        سوق واحد. عالم كامل.
+      </span>
+
+      <h1 data-i18n="heroTitle">
+        اكتشف ما تحب، وبِع ما تملك.
+      </h1>
+
+      <p data-i18n="heroText">
+        منصة عصرية للشراء والبيع، مفتوحة للجميع حول العالم.
+      </p>
+
+      <div class="hero-buttons">
+
+        <button class="primary" id="sellBtn" data-i18n="sell">
+          + أضف منتجاً
+        </button>
+
+        <a class="secondary"
+           href="#products"
+           data-i18n="explore">
+          استكشف المنتجات
+        </a>
+
+      </div>
+
+    </div>
+
+    <div class="hero-art">
+
+      <div class="symbol">✦</div>
+
+      <strong>Soukis</strong>
+
+      <span>Marketplace</span>
+
+    </div>
+
+  </section>
+
+
+  <div class="search-box">
+
+    <input
+      id="searchInput"
+      type="search"
+      placeholder="ابحث عن منتج أو فئة..."
+      data-i18n-placeholder="search"
+    >
+
+    <select id="categoryFilter">
+
+      <option value="all" data-i18n="allCategories">
+        كل الفئات
+      </option>
+
+      <option value="electronics">
+        Electronics
+      </option>
+
+      <option value="fashion">
+        Fashion
+      </option>
+
+      <option value="home">
+        Home
+      </option>
+
+      <option value="sports">
+        Sports
+      </option>
+
+    </select>
+
+
+    <select id="sortFilter">
+
+      <option value="newest" data-i18n="newest">
+        الأحدث
+      </option>
+
+      <option value="low" data-i18n="lowest">
+        السعر: الأقل
+      </option>
+
+      <option value="high" data-i18n="highest">
+        السعر: الأعلى
+      </option>
+
+    </select>
+
+  </div>
+
+
+  <section class="content" id="categories">
+
+    <div class="section-header">
+
+      <small data-i18n="shopBy">
+        تسوق حسب الفئة
+      </small>
+
+      <h2 data-i18n="categoriesTitle">
+        الفئات
+      </h2>
+
+    </div>
+
+
+    <div class="categories">
+
+      <button class="category" data-category="electronics">
+        <span class="icon">⚡</span>
+        <strong>Electronics</strong>
+      </button>
+
+      <button class="category" data-category="fashion">
+        <span class="icon">✦</span>
+        <strong>Fashion</strong>
+      </button>
+
+      <button class="category" data-category="home">
+        <span class="icon">⌂</span>
+        <strong>Home</strong>
+      </button>
+
+      <button class="category" data-category="sports">
+        <span class="icon">◈</span>
+        <strong>Sports</strong>
+      </button>
+
+    </div>
+
+  </section>
+
+
+  <section class="content" id="products">
+
+    <div class="section-header products-header">
+
+      <div>
+
+        <small data-i18n="featured">
+          منتجات مختارة
+        </small>
+
+        <h2 data-i18n="discover">
+          اكتشف الجديد
+        </h2>
+
+      </div>
+
+      <span id="resultCount"></span>
+
+    </div>
+
+
+    <div id="productsGrid" class="products"></div>
+
+  </section>
+
+</main>
+
+
+<footer>
+
+  <strong>Soukis</strong>
+
+  <span data-i18n="footer">
+    — سوق عالمي بسيط، سريع، ومفتوح للجميع.
+  </span>
+
+</footer>
+
+
+<div class="modal" id="modal" hidden>
+
+  <div class="modal-box">
+
+    <button class="close" id="closeModal">
+      ×
+    </button>
+
+    <div id="modalContent"></div>
+
+  </div>
+
+</div>
+
+
+<div id="toast"></div>
+
+
+<script>
+
+const products = [
+
+  {
+    id: 1,
+    name: "Premium Smartphone",
+    category: "electronics",
+    price: 499,
+    currency: "$",
+    location: "Global",
+    icon: "📱"
+  },
+
+  {
+    id: 2,
+    name: "Wireless Headphones",
+    category: "electronics",
+    price: 89,
+    currency: "$",
+    location: "Global",
+    icon: "🎧"
+  },
+
+  {
+    id: 3,
+    name: "Modern Jacket",
+    category: "fashion",
+    price: 75,
+    currency: "$",
+    location: "Global",
+    icon: "🧥"
+  },
+
+  {
+    id: 4,
+    name: "Designer Shoes",
+    category: "fashion",
+    price: 120,
+    currency: "$",
+    location: "Global",
+    icon: "👟"
+  },
+
+  {
+    id: 5,
+    name: "Modern Chair",
+    category: "home",
+    price: 145,
+    currency: "$",
+    location: "Global",
+    icon: "🪑"
+  },
+
+  {
+    id: 6,
+    name: "Smart Lamp",
+    category: "home",
+    price: 49,
+    currency: "$",
+    location: "Global",
+    icon: "💡"
+  },
+
+  {
+    id: 7,
+    name: "Football",
+    category: "sports",
+    price: 35,
+    currency: "$",
+    location: "Global",
+    icon: "⚽"
+  },
+
+  {
+    id: 8,
+    name: "Fitness Watch",
+    category: "sports",
+    price: 99,
+    currency: "$",
+    location: "Global",
+    icon: "⌚"
+  }
+
+];
+
+
+const translations = {
+
+  ar: {
+
+    shop: "المتجر",
+    categories: "الفئات",
+    eyebrow: "سوق واحد. عالم كامل.",
+    heroTitle: "اكتشف ما تحب، وبِع ما تملك.",
+    heroText:
+      "منصة عصرية للشراء والبيع، مفتوحة للجميع حول العالم.",
+    sell: "+ أضف منتجاً",
+    explore: "استكشف المنتجات",
+    search: "ابحث عن منتج أو فئة...",
+    allCategories: "كل الفئات",
+    newest: "الأحدث",
+    lowest: "السعر: الأقل",
+    highest: "السعر: الأعلى",
+    shopBy: "تسوق حسب الفئة",
+    categoriesTitle: "الفئات",
+    featured: "منتجات مختارة",
+    discover: "اكتشف الجديد",
+    footer: "— سوق عالمي بسيط، سريع، ومفتوح للجميع.",
+    results: "منتجات",
+    add: "أضف إلى السلة",
+    adminTitle: "لوحة الإدارة",
+    adminText: "سيتم ربط لوحة الإدارة مع Supabase في المرحلة التالية.",
+    sellTitle: "أضف منتجاً",
+    productName: "اسم المنتج",
+    price: "السعر",
+    category: "الفئة",
+    save: "نشر المنتج"
+
+  },
+
+  fr: {
+
+    shop: "Boutique",
+    categories: "Catégories",
+    eyebrow: "Un marché. Un monde.",
+    heroTitle: "Découvrez ce que vous aimez et vendez ce que vous avez.",
+    heroText:
+      "Une marketplace moderne ouverte aux acheteurs et vendeurs du monde entier.",
+    sell: "+ Ajouter un produit",
+    explore: "Explorer les produits",
+    search: "Rechercher un produit ou une catégorie...",
+    allCategories: "Toutes les catégories",
+    newest: "Plus récents",
+    lowest: "Prix : croissant",
+    highest: "Prix : décroissant",
+    shopBy: "Acheter par catégorie",
+    categoriesTitle: "Catégories",
+    featured: "Produits sélectionnés",
+    discover: "Découvrez les nouveautés",
+    footer: "— Une marketplace simple, rapide et ouverte à tous.",
+    results: "produits",
+    add: "Ajouter au panier",
+    adminTitle: "Administration",
+    adminText: "Le panneau d'administration sera connecté à Supabase à l'étape suivante.",
+    sellTitle: "Ajouter un produit",
+    productName: "Nom du produit",
+    price: "Prix",
+    category: "Catégorie",
+    save: "Publier"
+
+  },
+
+  en: {
+
+    shop: "Shop",
+    categories: "Categories",
+    eyebrow: "One marketplace. A whole world.",
+    heroTitle: "Discover what you love. Sell what you have.",
+    heroText:
+      "A modern marketplace open to buyers and sellers worldwide.",
+    sell: "+ Add a product",
+    explore: "Explore products",
+    search: "Search for a product or category...",
+    allCategories: "All categories",
+    newest: "Newest",
+    lowest: "Price: low to high",
+    highest: "Price: high to low",
+    shopBy: "Shop by category",
+    categoriesTitle: "Categories",
+    featured: "Featured products",
+    discover: "Discover what's new",
+    footer: "— A simple, fast marketplace open to everyone.",
+    results: "products",
+    add: "Add to cart",
+    adminTitle: "Admin Panel",
+    adminText: "The admin panel will be connected to Supabase in the next stage.",
+    sellTitle: "Add a product",
+    productName: "Product name",
+    price: "Price",
+    category: "Category",
+    save: "Publish"
+
+  }
+
+};
+
+
+let currentLanguage = "ar";
+
+
+function t(key) {
+
+  return translations[currentLanguage][key]
+    || translations.ar[key]
+    || key;
+
+}
+
+
+function applyLanguage() {
+
+  const language = document.getElementById("language").value;
+
+  currentLanguage = language;
+
+  document.documentElement.lang = language;
+
+  document.documentElement.dir =
+    language === "ar" ? "rtl" : "ltr";
+
+
+  document.querySelectorAll("[data-i18n]")
+    .forEach(element => {
+
+      const key = element.dataset.i18n;
+
+      element.textContent = t(key);
+
+    });
+
+
+  document.querySelectorAll("[data-i18n-placeholder]")
+    .forEach(element => {
+
+      const key = element.dataset.i18nPlaceholder;
+
+      element.placeholder = t(key);
+
+    });
+
+
+  renderProducts();
+
+}
+
+
+function renderProducts() {
+
+  const search =
+    document.getElementById("searchInput")
+      .value
+      .trim()
+      .toLowerCase();
+
+  const category =
+    document.getElementById("categoryFilter")
+      .value;
+
+  const sort =
+    document.getElementById("sortFilter")
+      .value;
+
+
+  let result = products.filter(product => {
+
+    const matchesSearch =
+      !search ||
+      product.name.toLowerCase().includes(search) ||
+      product.category.toLowerCase().includes(search);
+
+    const matchesCategory =
+      category === "all" ||
+      product.category === category;
+
+    return matchesSearch && matchesCategory;
+
+  });
+
+
+  if (sort === "low") {
+
+    result.sort((a,b) => a.price - b.price);
+
+  }
+
+  if (sort === "high") {
+
+    result.sort((a,b) => b.price - a.price);
+
+  }
+
+
+  const grid =
+    document.getElementById("productsGrid");
+
+
+  grid.innerHTML = "";
+
+
+  result.forEach(product => {
+
+    const card = document.createElement("article");
+
+    card.className = "product";
+
+    card.innerHTML = `
+
+      <div class="product-image">
+        ${product.icon}
+      </div>
+
+      <div class="product-body">
+
+        <div class="product-category">
+          ${product.category}
+        </div>
+
+        <h3>${product.name}</h3>
+
+        <div class="product-price">
+          ${product.currency}${product.price}
+        </div>
+
+        <div class="product-location">
+          🌍 ${product.location}
+        </div>
+
+        <button
+          onclick="addToCart(${product.id})">
+          ${t("add")}
+        </button>
+
+      </div>
+
+    `;
+
+    grid.appendChild(card);
+
+  });
+
+
+  document.getElementById("resultCount")
+    .textContent =
+      `${result.length} ${t("results")}`;
+
+}
+
+
+function addToCart(id) {
+
+  const product =
+    products.find(p => p.id === id);
+
+  showToast(
+    currentLanguage === "ar"
+      ? `تمت إضافة ${product.name} إلى السلة`
+      : currentLanguage === "fr"
+      ? `${product.name} ajouté au panier`
+      : `${product.name} added to cart`
+  );
+
+}
+
+
+function showToast(message) {
+
+  const toast =
+    document.getElementById("toast");
+
+  toast.textContent = message;
+
+  toast.classList.add("show");
+
+  setTimeout(() => {
+
+    toast.classList.remove("show");
+
+  }, 2500);
+
+}
+
+
+function openModal(content) {
+
+  document.getElementById("modalContent")
+    .innerHTML = content;
+
+  document.getElementById("modal")
+    .hidden = false;
+
+}
+
+
+function closeModal() {
+
+  document.getElementById("modal")
+    .hidden = true;
+
+}
+
+
+document.getElementById("language")
+  .addEventListener("change", applyLanguage);
+
+
+document.getElementById("searchInput")
+  .addEventListener("input", renderProducts);
+
+
+document.getElementById("categoryFilter")
+  .addEventListener("change", renderProducts);
+
+
+document.getElementById("sortFilter")
+  .addEventListener("change", renderProducts);
+
+
+document.querySelectorAll(".category")
+  .forEach(button => {
+
+    button.addEventListener("click", () => {
+
+      document.getElementById("categoryFilter")
+        .value = button.dataset.category;
+
+      renderProducts();
+
+      document.getElementById("products")
+        .scrollIntoView({
+          behavior: "smooth"
+        });
+
+    });
+
+  });
+
+
+document.getElementById("sellBtn")
+  .addEventListener("click", () => {
+
+    openModal(`
+
+      <h2>${t("sellTitle")}</h2>
+
+      <form class="form" id="sellForm">
+
+        <input
+          required
+          name="name"
+          placeholder="${t("productName")}">
+
+        <input
+          required
+          name="price"
+          type="number"
+          min="0"
+          placeholder="${t("price")}">
+
+        <select name="category">
+
+          <option value="electronics">
+            Electronics
+          </option>
+
+          <option value="fashion">
+            Fashion
+          </option>
+
+          <option value="home">
+            Home
+          </option>
+
+          <option value="sports">
+            Sports
+          </option>
+
+        </select>
+
+        <textarea
+          placeholder="Description">
+        </textarea>
+
+        <button type="submit">
+          ${t("save")}
+        </button>
+
+      </form>
+
+    `);
+
+
+    document.getElementById("sellForm")
+      .addEventListener("submit", event => {
+
+        event.preventDefault();
+
+        showToast(
+          currentLanguage === "ar"
+            ? "تم تجهيز المنتج للنشر. سنربطه بـ Supabase لاحقاً."
+            : currentLanguage === "fr"
+            ? "Produit prêt. La connexion à Supabase arrive ensuite."
+            : "Product ready. Supabase connection comes next."
+        );
+
+        closeModal();
+
+      });
+
+  });
+
+
+document.getElementById("adminBtn")
+  .addEventListener("click", () => {
+
+    openModal(`
+
+      <h2>${t("adminTitle")}</h2>
+
+      <p style="color:#6b7280;margin-top:10px">
+        ${t("adminText")}
+      </p>
+
+    `);
+
+  });
+
+
+document.getElementById("closeModal")
+  .addEventListener("click", closeModal);
+
+
+document.getElementById("modal")
+  .addEventListener("click", event => {
+
+    if (event.target.id === "modal") {
+      closeModal();
+    }
+
+  });
+
+
+applyLanguage();
+
+</script>
+
+</body>
+</html>
