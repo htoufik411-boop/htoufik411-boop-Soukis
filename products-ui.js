@@ -23,7 +23,6 @@ export function installProductsUI() {
     if (sort?.value === 'price-desc') items.sort((a,b) => Number(b.price||0)-Number(a.price||0));
     if (sort?.value === 'oldest') items.sort((a,b) => new Date(a.created_at)-new Date(b.created_at));
     else if (sort?.value !== 'price-asc' && sort?.value !== 'price-desc') items.sort((a,b) => new Date(b.created_at||0)-new Date(a.created_at||0));
-
     if (count) count.textContent = `${items.length} منتج`;
     grid.innerHTML = items.length ? items.map(card).join('') : '<div class="empty">لا توجد منتجات مطابقة حاليًا.</div>';
     grid.querySelectorAll('[data-add-listing]').forEach(button => button.addEventListener('click', async () => {
@@ -40,6 +39,7 @@ export function installProductsUI() {
   search?.addEventListener('input', render);
   category?.addEventListener('change', render);
   sort?.addEventListener('change', render);
+  window.addEventListener('soukis:listing-created', () => load().then(render));
   load().then(render);
 
   async function load() {
