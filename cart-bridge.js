@@ -1,6 +1,7 @@
 import { addToCart, getCart } from './cart-ui.js';
 import { installSoukisIntegration } from './sou kis-integration.js';
-import { installAdminAuthUI } from './auth-admin-ui.js';
+import { bootstrapFirstAdmin, isCurrentUserAdmin } from './auth-admin-ui.js';
+import { renderAdminPanel } from './admin-panel.js';
 
 export function installCartBridge({ buttonSelector = '.cart', listingIdAttribute = 'data-listing-id' } = {}) {
   document.addEventListener('click', async (event) => {
@@ -30,12 +31,26 @@ export function installCartBridge({ buttonSelector = '.cart', listingIdAttribute
     const openModal = html => { if (body) body.innerHTML = html; if (modal) modal.hidden = false; };
     const closeModal = () => { if (modal) modal.hidden = true; };
     installSoukisIntegration({ openModal, closeModal });
-    installAdminAuthUI({ openModal, closeModal });
 
     const adminButton = document.getElementById('admin');
-    if (adminButton) {
-      adminButton.dataset.soukisAction = 'admin';
-      adminButton.dataset.soukisAdminBootstrap = 'true';
+    if (adminButton && !adminButton.dataset.soukisAdminBound) {
+      adminButton.dataset.soukisAdminBound = 'true';
+      adminButton.addEventListener('click', async () => {
+        adminButton.disabled = true;
+        try {
+          let admin = await isCurrentUserAdmin();
+          if (!admin) {
+            const claimed = await bootstrapFirstAdmin();
+            admin = claimed.ok && claimed.claimed;
+          }
+          if (!admin) {
+            openModal('<h2>Admin</h2><div class="msg">سجّل الدخول أولاً، أو يوجد Admin رئيسي بالفعل.</div>');
+            return;
+          }
+          openModal('<h2>Admin</h2><div id="adminPanel" class="form"><p>جاري التحميل…</p></div>');
+          await renderAdminPanel(document.getElementById('adminPanel'));
+        } finally { adminButton.disabled = false; }
+      });
     }
 
     const cartButton = document.getElementById('cartBtn');
