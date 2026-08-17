@@ -1,4 +1,5 @@
 import { addToCart, getCart } from './cart-ui.js';
+import { installSoukisIntegration } from './sou kis-integration.js';
 
 export function installCartBridge({ buttonSelector = '.cart', listingIdAttribute = 'data-listing-id' } = {}) {
   document.addEventListener('click', async (event) => {
@@ -24,4 +25,12 @@ export function installCartBridge({ buttonSelector = '.cart', listingIdAttribute
       button.disabled = false;
     }
   });
+
+  window.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('modal');
+    const body = document.getElementById('modalBody');
+    const openModal = html => { if (body) body.innerHTML = html; if (modal) modal.hidden = false; };
+    const closeModal = () => { if (modal) modal.hidden = true; };
+    installSoukisIntegration({ openModal, closeModal });
+  }, { once: true });
 }
