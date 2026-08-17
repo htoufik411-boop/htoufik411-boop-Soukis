@@ -1,5 +1,5 @@
 import { addToCart, getCart } from './cart-ui.js';
-import { installSoukisIntegration } from './sou kis-integration.js';
+import { installSoukisIntegration } from './soukis-integration.js';
 import { bootstrapFirstAdmin, isCurrentUserAdmin } from './auth-admin-ui.js';
 import { renderAdminPanel } from './admin-panel.js';
 
