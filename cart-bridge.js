@@ -26,11 +26,14 @@ export function installCartBridge({ buttonSelector = '.cart', listingIdAttribute
     }
   });
 
-  window.addEventListener('DOMContentLoaded', () => {
+  const install = () => {
     const modal = document.getElementById('modal');
     const body = document.getElementById('modalBody');
     const openModal = html => { if (body) body.innerHTML = html; if (modal) modal.hidden = false; };
     const closeModal = () => { if (modal) modal.hidden = true; };
     installSoukisIntegration({ openModal, closeModal });
-  }, { once: true });
+  };
+
+  if (document.readyState === 'loading') window.addEventListener('DOMContentLoaded', install, { once: true });
+  else install();
 }
