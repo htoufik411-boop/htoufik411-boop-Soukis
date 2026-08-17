@@ -3,7 +3,7 @@ import { openMyOrders } from './user-orders-panel.js';
 import { renderAdminPanel } from './admin-panel.js';
 import { openSellModal } from './sell-ui.js';
 
-export function installSoukisIntegration({ openModal, closeModal, refreshProducts }) {
+export function installSoukisIntegration({ openModal, closeModal }) {
   if (document.documentElement.dataset.soukisIntegrationInstalled === 'true') return;
   document.documentElement.dataset.soukisIntegrationInstalled = 'true';
 
@@ -19,11 +19,13 @@ export function installSoukisIntegration({ openModal, closeModal, refreshProduct
       : adminButton ? 'admin'
       : sellButton ? 'sell'
       : 'cart';
+
     event.preventDefault();
+    event.stopImmediatePropagation();
 
     if (action === 'checkout') await openCheckout(openModal, closeModal);
     if (action === 'my-orders') await openMyOrders(openModal);
-    if (action === 'sell') await openSellModal(openModal, closeModal, refreshProducts);
+    if (action === 'sell') await openSellModal(openModal, closeModal);
     if (action === 'cart') await openCheckout(openModal, closeModal);
     if (action === 'admin') {
       openModal('<h2>Admin</h2><div id="adminPanel" class="form"></div>');
