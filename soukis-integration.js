@@ -1,13 +1,13 @@
 import { openMyOrders } from './user-orders-panel.js';
 import { renderAdminPanel } from './admin-panel.js';
 import { openSellModal } from './sell-ui.js';
-import { installI18n, getCurrentLanguage } from './i18n.js';
+import { getCurrentLanguage } from './i18n.js';
 
 const text=(ar,fr,en)=>getCurrentLanguage()==='ar'?ar:getCurrentLanguage()==='fr'?fr:en;
 
 export function installSoukisIntegration({openModal,closeModal}){
   if(document.documentElement.dataset.soukisIntegrationInstalled==='true')return;
-  document.documentElement.dataset.soukisIntegrationInstalled='true';installI18n();
+  document.documentElement.dataset.soukisIntegrationInstalled='true';
   document.addEventListener('click',async event=>{
     const actionButton=event.target.closest('[data-soukis-action]'),adminButton=event.target.closest('#admin'),sellButton=event.target.closest('#sellBtn,#heroSell'),button=actionButton||adminButton||sellButton;if(!button)return;
     const action=actionButton?button.dataset.soukisAction:adminButton?'admin':'sell';event.preventDefault();event.stopImmediatePropagation();
