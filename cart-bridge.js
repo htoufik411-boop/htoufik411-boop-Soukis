@@ -1,5 +1,6 @@
 import { addToCart, getCart } from './cart-ui.js';
 import { installSoukisIntegration } from './sou kis-integration.js';
+import { installAdminAuthUI } from './auth-admin-ui.js';
 
 export function installCartBridge({ buttonSelector = '.cart', listingIdAttribute = 'data-listing-id' } = {}) {
   document.addEventListener('click', async (event) => {
@@ -29,9 +30,13 @@ export function installCartBridge({ buttonSelector = '.cart', listingIdAttribute
     const openModal = html => { if (body) body.innerHTML = html; if (modal) modal.hidden = false; };
     const closeModal = () => { if (modal) modal.hidden = true; };
     installSoukisIntegration({ openModal, closeModal });
+    installAdminAuthUI({ openModal, closeModal });
 
     const adminButton = document.getElementById('admin');
-    if (adminButton) adminButton.dataset.soukisAction = 'admin';
+    if (adminButton) {
+      adminButton.dataset.soukisAction = 'admin';
+      adminButton.dataset.soukisAdminBootstrap = 'true';
+    }
 
     const cartButton = document.getElementById('cartBtn');
     if (cartButton && !cartButton.dataset.soukisBound) {
