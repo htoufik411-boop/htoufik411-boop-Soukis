@@ -7,41 +7,26 @@ export async function createOrderFromCart({ shippingName, shippingPhone, shippin
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, reason: 'auth_required' };
 
-  const { data: items, error: itemsError } = await supabase
-    .from('cart_items')
-    .select('id, listing_id, quantity, listings(id, title, name, price, currency)')
-    .eq('user_id', user.id);
-  if (itemsError) return { ok: false, error: itemsError };
-  if (!items?.length) return { ok: false, reason: 'empty_cart' };
+  const { data: orderId, error } = await supabase.rpc('create_order_from_cart', {
+    p_shipping_name: shippingName ?? null,
+    p_shipping_phone: shippingPhone ?? null,
+    p_shipping_address: shippingAddress ?? null
+  });
 
-  const validItems = items.filter(item => item.listings?.id && Number(item.quantity) > 0 && Number(item.listings?.price) >= 0);
-  if (!validItems.length) return { ok: false, reason: 'invalid_cart' };
-
-  const currency = validItems[0].listings?.currency || 'DZD';
-  const total = validItems.reduce((sum, item) => sum + Number(item.listings.price) * Number(item.quantity), 0);
+  if (error) {
+    if (error.code === 'P0002') return { ok: false, reason: 'empty_cart', error };
+    if (error.code === 'P0001') return { ok: false, reason: 'listing_unavailable', error };
+    if (error.code === '22023') return { ok: false, reason: 'invalid_checkout', error };
+    return { ok: false, error };
+  }
 
   const { data: order, error: orderError } = await supabase
     .from('orders')
-    .insert({ user_id: user.id, total, currency, status: 'pending', shipping_name: shippingName || null, shipping_phone: shippingPhone || null, shipping_address: shippingAddress || null })
     .select('*')
+    .eq('id', orderId)
+    .eq('user_id', user.id)
     .single();
+
   if (orderError) return { ok: false, error: orderError };
-
-  const orderItems = validItems.map(item => ({
-    order_id: order.id,
-    listing_id: item.listing_id,
-    title: item.listings.title || item.listings.name || 'Soukis',
-    quantity: Number(item.quantity),
-    unit_price: Number(item.listings.price)
-  }));
-
-  const { error: orderItemsError } = await supabase.from('order_items').insert(orderItems);
-  if (orderItemsError) {
-    await supabase.from('orders').delete().eq('id', order.id).eq('user_id', user.id);
-    return { ok: false, error: orderItemsError };
-  }
-
-  const { error: clearError } = await supabase.from('cart_items').delete().eq('user_id', user.id);
-  if (clearError) return { ok: false, error: clearError, order };
   return { ok: true, order };
 }
