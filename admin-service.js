@@ -61,13 +61,10 @@ export async function reviewPromotion(promotionId, status, reviewNote = '') {
   const guard = await requireAdmin();
   if (!guard.ok) return guard;
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data, error } = await supabase
-    .from('promotion_events')
-    .update({ status, reviewed_by: user.id, reviewed_at: new Date().toISOString(), review_note: reviewNote || null })
-    .eq('id', promotionId)
-    .eq('status', 'pending')
-    .select('*')
-    .single();
-  return error ? { ok: false, error } : { ok: true, promotion: data };
+  const { data, error } = await supabase.rpc('admin_review_promotion', {
+    p_promotion_id: promotionId,
+    p_status: status,
+    p_review_note: reviewNote || null
+  });
+  return error ? { ok: false, error } : { ok: true, promotion: data?.promotion || null };
 }
