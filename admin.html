@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Soukis Admin</title>
+</head>
+<body>
+  <main>
+    <h1>Soukis Admin</h1>
+    <p id="admin-status">Checking access…</p>
+  </main>
+  <script type="module">
+    import { db } from './supabase.js';
+    const status = document.getElementById('admin-status');
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) {
+      status.textContent = 'Access denied.';
+      throw new Error('Authentication required');
+    }
+    const { data, error } = await db.rpc('is_admin');
+    if (error || data !== true) {
+      status.textContent = 'Access denied.';
+      throw new Error('Admin access denied');
+    }
+    status.textContent = 'Admin access confirmed.';
+  </script>
+</body>
+</html>
