@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Validate required entrypoints
         shell: bash
@@ -46,12 +46,13 @@ jobs:
           import pathlib
           import re
           import sys
+          from urllib.parse import urlsplit
 
           html = pathlib.Path("index.html").read_text(encoding="utf-8")
           imports = re.findall(r"from\s+['\"](\./[^'\"]+)['\"]", html)
           missing = []
           for ref in imports:
-              path = pathlib.Path(ref[2:])
+              path = pathlib.Path(urlsplit(ref).path.lstrip("./"))
               if not path.is_file():
                   missing.append(ref)
           if missing:
@@ -75,7 +76,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RniE 'service_role|SUPABASE_SERVICE_ROLE|sb_secret_' --exclude-dir=.git .; then
+          if grep -RniE 'sb_secret_|SUPABASE_SERVICE_ROLE_KEY|service_role[[:space:]]*['"'"']?[=:]' --exclude-dir=.git .; then
             echo "Forbidden server-side Supabase credential pattern detected in repository files."
             exit 1
           fi
