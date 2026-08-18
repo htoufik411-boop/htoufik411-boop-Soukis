@@ -8,6 +8,16 @@ const plans = {
     ar: { title: '⭐ Premium', text: 'مزايا متقدمة للبائعين: إبراز المنتجات وأدوات إضافية للنمو.' },
     fr: { title: '⭐ Premium', text: 'Des avantages avancés pour les vendeurs : mise en avant et outils supplémentaires.' },
     en: { title: '⭐ Premium', text: 'Advanced seller benefits: featured listings and additional growth tools.' }
+  },
+  max: {
+    ar: { title: '👑 Max', text: 'باقة متقدمة للبائعين النشطين مع مزايا ظهور وأدوات نمو إضافية.' },
+    fr: { title: '👑 Max', text: 'Une formule avancée pour les vendeurs actifs, avec plus de visibilité et d’outils.' },
+    en: { title: '👑 Max', text: 'An advanced plan for active sellers with more visibility and growth tools.' }
+  },
+  maxPro: {
+    ar: { title: '💎 Max Pro', text: 'أعلى باقة للبائعين المحترفين مع أقصى مستوى من الظهور والمزايا.' },
+    fr: { title: '💎 Max Pro', text: 'La formule premium pour les vendeurs professionnels, avec le maximum de visibilité et d’avantages.' },
+    en: { title: '💎 Max Pro', text: 'The top plan for professional sellers, with maximum visibility and benefits.' }
   }
 };
 
@@ -29,11 +39,18 @@ export function installMonetization({ openModal }) {
     return btn;
   };
 
-  bar.append(makeButton('boostBtn', 'boost'), makeButton('premiumBtn', 'premium'));
+  bar.append(
+    makeButton('boostBtn', 'boost'),
+    makeButton('premiumBtn', 'premium'),
+    makeButton('maxBtn', 'max'),
+    makeButton('maxProBtn', 'maxPro')
+  );
 
   document.getElementById('lang')?.addEventListener('change', () => {
     const lang = document.getElementById('lang')?.value || 'ar';
-    document.querySelector('#boostBtn').textContent = plans.boost[lang]?.title || plans.boost.ar.title;
-    document.querySelector('#premiumBtn').textContent = plans.premium[lang]?.title || plans.premium.ar.title;
+    for (const [id, key] of [['boostBtn','boost'],['premiumBtn','premium'],['maxBtn','max'],['maxProBtn','maxPro']]) {
+      const button = document.getElementById(id);
+      if (button) button.textContent = plans[key][lang]?.title || plans[key].ar.title;
+    }
   });
 }
