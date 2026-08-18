@@ -6,26 +6,77 @@ on:
   pull_request:
     branches: [main]
 
+# Keep the workflow token read-only by default.
 permissions:
   contents: read
 
 jobs:
   validate:
+    name: Validate Soukis
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
-      - name: Validate required files
+        uses: actions/checkout@v5
+
+      - name: Validate required entrypoints
         shell: bash
         run: |
           set -euo pipefail
-          for f in index.html app-config.js orders-service.js order-checkout.js my-orders.js user-orders-panel.js admin-service.js admin-panel.js auth-admin-ui.js; do
+          for f in index.html admin.html app-config.js; do
             test -f "$f" || { echo "Missing required file: $f"; exit 1; }
           done
+
       - name: Validate JavaScript syntax
         shell: bash
         run: |
           set -euo pipefail
-          for f in *.js; do
+          shopt -s nullglob
+          files=( *.js )
+          test "${#files[@]}" -gt 0 || { echo "No JavaScript files found"; exit 1; }
+          for f in "${files[@]}"; do
+            echo "Checking $f"
             node --check "$f"
           done
+
+      - name: Validate local modules imported by the main page
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import pathlib
+          import re
+          import sys
+          from urllib.parse import urlsplit
+
+          html = pathlib.Path("index.html").read_text(encoding="utf-8")
+          imports = re.findall(r"from\s+['\"](\./[^'\"]+)['\"]", html)
+          missing = []
+          for ref in imports:
+              path = pathlib.Path(urlsplit(ref).path.lstrip("./"))
+              if not path.is_file():
+                  missing.append(ref)
+          if missing:
+              print("Missing local modules:")
+              print("\n".join(missing))
+              sys.exit(1)
+          print(f"Validated {len(imports)} local module imports.")
+          PY
+
+      - name: Validate HTML has the expected application shell
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q '<html lang="ar" dir="rtl">' index.html
+          grep -q 'id="lang"' index.html
+          grep -q 'id="cartBtn"' index.html
+          grep -q 'id="admin"' index.html
+          grep -q 'id="grid"' index.html
+
+      - name: Check for forbidden Supabase service-role credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git grep -nE 'sb_secret_|SUPABASE_SERVICE_ROLE_KEY|service_role[[:space:]]*['"'"']?[=:]' -- ':!.github/workflows/validate.yml'; then
+            echo "Forbidden server-side Supabase credential pattern detected in repository files."
+            exit 1
+          fi
