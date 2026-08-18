@@ -1,0 +1,40 @@
+name: Soukis QA
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  static-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check critical files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test -f i18n.js
+          test -f products-ui.js
+          test -f cart-bridge.js
+          test -f supabase.js
+          test -f auth.js
+          test -f admin.js
+      - name: Check for exposed service-role credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          if grep -RniE 'service_role|SUPABASE_SERVICE_ROLE|sk-[A-Za-z0-9_-]{20,}' --exclude-dir=.git --exclude='qa.yml' .; then
+            echo 'Potential privileged credential detected in repository.'
+            exit 1
+          fi
+      - name: Check required localization files
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "ar:" i18n.js
+          grep -q "fr:" i18n.js
+          grep -q "en:" i18n.js
