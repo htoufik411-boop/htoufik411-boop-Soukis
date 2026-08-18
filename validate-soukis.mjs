@@ -1,9 +1,9 @@
 import fs from 'node:fs';
 
 const required = [
-  'index.html','app-config.js','orders-service.js','order-checkout.js',
-  'my-orders.js','user-orders-panel.js','admin-service.js','admin-panel.js',
-  'auth-admin-ui.js'
+  'index.html','app-config.js','i18n.js','products-ui.js','cart-ui.js','cart-bridge.js',
+  'orders-service.js','order-checkout.js','my-orders.js','user-orders-panel.js',
+  'admin-service.js','admin-panel.js','auth-admin-ui.js'
 ];
 
 const missing = required.filter(file => !fs.existsSync(file));
@@ -13,8 +13,11 @@ if (missing.length) {
 }
 
 const html = fs.readFileSync('index.html', 'utf8');
-for (const file of ['app-config.js', 'cart-bridge.js']) {
-  if (!html.includes(file)) console.warn(`Notice: ${file} is not referenced by index.html`);
+for (const file of ['app-config.js', 'i18n.js', 'cart-bridge.js', 'products-ui.js']) {
+  if (!html.includes(file)) {
+    console.error(`Required module is not referenced by index.html: ${file}`);
+    process.exit(1);
+  }
 }
 
 for (const file of fs.readdirSync('.').filter(f => f.endsWith('.js'))) {
