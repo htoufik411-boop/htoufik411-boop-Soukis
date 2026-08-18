@@ -76,7 +76,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -RniE 'sb_secret_|SUPABASE_SERVICE_ROLE_KEY|service_role[[:space:]]*['"'"']?[=:]' --exclude-dir=.git .; then
+          if grep -RniE 'sb_secret_|SUPABASE_SERVICE_ROLE_KEY|service_role[[:space:]]*['"'"']?[=:]' --exclude-dir=.git --exclude='.github/workflows/validate.yml' .; then
             echo "Forbidden server-side Supabase credential pattern detected in repository files."
             exit 1
           fi
