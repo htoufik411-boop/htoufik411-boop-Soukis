@@ -20,11 +20,12 @@ export async function createOrderFromCart({ shippingName, shippingPhone, shippin
     return { ok: false, error };
   }
 
+  // orders uses buyer_id (not user_id). RLS also restricts reads to the authenticated buyer.
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .select('*')
     .eq('id', orderId)
-    .eq('user_id', user.id)
+    .eq('buyer_id', user.id)
     .single();
 
   if (orderError) return { ok: false, error: orderError };
