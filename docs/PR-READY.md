@@ -1,0 +1,1 @@
+PR review should start from the complete diff on `fix/final-ui-robustness`, then request Copilot review and validate its comments. Do not merge before runtime validation.
