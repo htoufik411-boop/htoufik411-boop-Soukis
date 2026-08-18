@@ -1,8 +1,6 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SOUKIS_CONFIG } from './app-config.js';
+import { db } from './supabase.js';
 import { getCurrentLanguage } from './i18n.js';
 
-const supabase=createClient(SOUKIS_CONFIG.supabaseUrl,SOUKIS_CONFIG.supabasePublishableKey);
 let listings=[];
 let categories=[];
 let cities=[];
@@ -30,8 +28,8 @@ export function installProductsUI(){
  load().then(render);
  async function load(){
   grid.innerHTML=`<div class="empty">${text('جاري تحميل المنتجات…','Chargement des produits…','Loading products…')}</div>`;
-  const [listingResult,catResult,cityResult]=await Promise.all([supabase.from('listings').select('*').order('created_at',{ascending:false}),supabase.from('categories').select('id,name_ar,name_fr,name_en').order('name_en'),supabase.from('cities').select('id,name_ar,name_fr,name_en').order('name_en')]);
-  if(listingResult.error){grid.innerHTML=`<div class="empty">${text('تعذر تحميل المنتجات. تحقق من إعدادات Supabase.','Impossible de charger les produits. Vérifiez Supabase.','Could not load products. Check Supabase settings.')}`;return;}
+  const [listingResult,catResult,cityResult]=await Promise.all([db.from('listings').select('*').order('created_at',{ascending:false}),db.from('categories').select('id,name_ar,name_fr,name_en').order('name_en'),db.from('cities').select('id,name_ar,name_fr,name_en').order('name_en')]);
+  if(listingResult.error){console.error('Soukis listings load failed:',listingResult.error);grid.innerHTML=`<div class="empty">${text('تعذر تحميل المنتجات. تحقق من إعدادات Supabase.','Impossible de charger les produits. Vérifiez Supabase.','Could not load products. Check Supabase settings.')}`;return;}
   listings=listingResult.data||[];categories=catResult.data||[];cities=cityResult.data||[];fillFilters(false);
  }
  function fillFilters(preserve){
@@ -43,5 +41,5 @@ export function installProductsUI(){
   cats?.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>{if(category){category.value=b.dataset.cat;category.dispatchEvent(new Event('change'));document.querySelector('#products')?.scrollIntoView({behavior:'smooth'});}}));
  }
 }
-function card(p){const id=esc(p.id),title=esc(p.title||p.name||text('منتج','Produit','Product')),cat=esc(categoryLabel(p)||text('عام','Général','General')),location=esc(cityLabel(p)),price=Number(p.price||0).toLocaleString(locale()),currency=esc(p.currency||'DA'),image=esc(p.image_url||p.image||'');return `<article class="product"><div class="pic">${image?`<img src="${image}" alt="${title}" loading="lazy">`:'<span class="emoji">🛍️</span>'}</div><div class="body"><small>${cat}</small><h3>${title}</h3><div class="price">${price} ${currency}</div><div class="loc">${location}</div><button type="button" class="cart" data-add-listing="${id}" data-listing-id="${id}">🛒 ${text('أضف إلى السلة','Ajouter au panier','Add to cart')}</button></div></article>`;}
+function card(p){const id=esc(p.id),title=esc(p.title||p.name||text('منتج','Produit','Product')),cat=esc(categoryLabel(p)||text('عام','Général','General')),location=esc(cityLabel(p)),price=Number(p.price||0).toLocaleString(locale()),currency=esc(p.currency||'DA'),image=esc(p.image_url||p.image||'');return `<article class="product"><div class="pic">${image?`<img src="${image}" alt="${title}" loading="lazy" onerror="this.onerror=null;this.closest('.pic').innerHTML='<span class=\"emoji\">🛍️</span>'">`:'<span class="emoji">🛍️</span>'}</div><div class="body"><small>${cat}</small><h3>${title}</h3><div class="price">${price} ${currency}</div><div class="loc">${location}</div><button type="button" class="cart" data-add-listing="${id}" data-listing-id="${id}">🛒 ${text('أضف إلى السلة','Ajouter au panier','Add to cart')}</button></div></article>`;}
 function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
