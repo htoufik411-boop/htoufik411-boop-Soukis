@@ -6,6 +6,7 @@ let categories=[];
 let cities=[];
 const text=(ar,fr,en)=>getCurrentLanguage()==='ar'?ar:getCurrentLanguage()==='fr'?fr:en;
 const locale=()=>getCurrentLanguage()==='ar'?'ar-DZ':getCurrentLanguage()==='fr'?'fr-FR':'en-US';
+const currencyLabel=()=>getCurrentLanguage()==='ar'?'دج':'DZD';
 const label=row=>{const lang=getCurrentLanguage();return lang==='ar'?(row?.name_ar||row?.name_en||''):lang==='fr'?(row?.name_fr||row?.name_en||''):(row?.name_en||'');};
 const categoryLabel=p=>p.category_id?(label(categories.find(c=>String(c.id)===String(p.category_id)))||p.category||''):p.category||'';
 const cityLabel=p=>p.city_id?(label(cities.find(c=>String(c.id)===String(p.city_id)))||p.city||''):p.city||p.location||'';
@@ -41,5 +42,5 @@ export function installProductsUI(){
   cats?.querySelectorAll('[data-cat]').forEach(b=>b.addEventListener('click',()=>{if(category){category.value=b.dataset.cat;category.dispatchEvent(new Event('change'));document.querySelector('#products')?.scrollIntoView({behavior:'smooth'});}}));
  }
 }
-function card(p){const id=esc(p.id),title=esc(p.title||p.name||text('منتج','Produit','Product')),cat=esc(categoryLabel(p)||text('عام','Général','General')),location=esc(cityLabel(p)),price=Number(p.price||0).toLocaleString(locale()),currency=esc(p.currency||'DA'),image=esc(p.image_url||p.image||'');return `<article class="product"><div class="pic">${image?`<img src="${image}" alt="${title}" loading="lazy" onerror="this.onerror=null;this.closest('.pic').innerHTML='<span class=\"emoji\">🛍️</span>'">`:'<span class="emoji">🛍️</span>'}</div><div class="body"><small>${cat}</small><h3>${title}</h3><div class="price">${price} ${currency}</div><div class="loc">${location}</div><button type="button" class="cart" data-add-listing="${id}" data-listing-id="${id}">🛒 ${text('أضف إلى السلة','Ajouter au panier','Add to cart')}</button></div></article>`;}
+function card(p){const id=esc(p.id),title=esc(p.title||p.name||text('منتج','Produit','Product')),cat=esc(categoryLabel(p)||text('عام','Général','General')),location=esc(cityLabel(p)),price=Number(p.price||0).toLocaleString(locale()),currency=esc(currencyLabel()),image=esc(p.image_url||p.image||'');return `<article class="product"><div class="pic">${image?`<img src="${image}" alt="${title}" loading="lazy" onerror="this.onerror=null;this.closest('.pic').innerHTML='<span class=\"emoji\">🛍️</span>'">`:'<span class="emoji">🛍️</span>'}</div><div class="body"><small>${cat}</small><h3>${title}</h3><div class="price">${price} ${currency}</div><div class="loc">${location}</div><button type="button" class="cart" data-add-listing="${id}" data-listing-id="${id}">🛒 ${text('أضف إلى السلة','Ajouter au panier','Add to cart')}</button></div></article>`;}
 function esc(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
