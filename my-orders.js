@@ -10,7 +10,9 @@ const statusLabel=s=>({pending:text('قيد الانتظار','En attente','Pend
 export async function getMyOrders(){
   const {data:{user}}=await supabase.auth.getUser();
   if(!user)return{ok:false,reason:'auth_required',orders:[]};
-  const{data,error}=await supabase.from('orders').select('id,status,total,currency,shipping_name,shipping_phone,shipping_address,created_at,order_items(id,listing_id,title,quantity,unit_price,listings(title,name))').eq('user_id',user.id).order('created_at',{ascending:false});
+  // order_items already stores the purchased title/price snapshot; do not join listings here.
+  // This avoids a fragile PostgREST relationship and keeps historical orders readable even if a listing changes.
+  const{data,error}=await supabase.from('orders').select('id,status,total,currency,shipping_name,shipping_phone,shipping_address,created_at,order_items(id,listing_id,title,quantity,unit_price)').eq('user_id',user.id).order('created_at',{ascending:false});
   return error?{ok:false,error,orders:[]}:{ok:true,orders:data||[]};
 }
 
