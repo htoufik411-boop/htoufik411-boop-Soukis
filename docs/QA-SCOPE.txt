@@ -1,0 +1,1 @@
+The QA scope covers localization, listings, cart, authentication, orders, promotions, admin authorization, Supabase policies, and mobile accessibility.
