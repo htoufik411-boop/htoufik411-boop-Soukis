@@ -1,0 +1,1 @@
+This branch establishes the pre-release QA gate and baseline CI. Runtime validation remains required.
