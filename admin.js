@@ -1,7 +1,7 @@
 import { db } from './supabase.js';
 
-export async function initAdmin() {
-  const button = document.querySelector('[data-admin]');
+export function initAdmin() {
+  const button = document.getElementById('admin');
   if (!button) return;
 
   button.addEventListener('click', async (event) => {
