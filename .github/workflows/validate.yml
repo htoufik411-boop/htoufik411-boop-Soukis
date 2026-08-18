@@ -30,8 +30,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          files=( *.js )
+          mapfile -t files < <(find . -type f -name '*.js' -not -path './.git/*' -not -path './node_modules/*' | sort)
           test "${#files[@]}" -gt 0 || { echo "No JavaScript files found"; exit 1; }
           for f in "${files[@]}"; do
             echo "Checking $f"
