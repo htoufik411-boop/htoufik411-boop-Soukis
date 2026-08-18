@@ -14,13 +14,12 @@ export async function getAdminOrders() {
   if (!(await isAdmin())) return { ok: false, reason: 'admin_required', orders: [] };
   const { data, error } = await supabase
     .from('orders')
-    .select('id,buyer_id,status,total,currency,shipping_name,shipping_phone,shipping_address,created_at')
+    .select('id,user_id,status,total,currency,shipping_name,shipping_phone,shipping_address,created_at')
     .order('created_at', { ascending: false });
   return error ? { ok: false, error, orders: [] } : { ok: true, orders: data || [] };
 }
 
 export async function updateOrderStatus(orderId, status) {
-  // Keep the frontend aligned with public.orders.status CHECK constraint.
   const allowed = ['pending', 'confirmed', 'shipped', 'completed', 'cancelled'];
   if (!allowed.includes(status)) return { ok: false, reason: 'invalid_status' };
   if (!(await isAdmin())) return { ok: false, reason: 'admin_required' };
