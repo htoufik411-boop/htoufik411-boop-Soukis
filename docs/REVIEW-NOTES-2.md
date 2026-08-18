@@ -1,0 +1,1 @@
+The application files were intentionally left unchanged in this pass. The purpose is to establish a verifiable QA and review gate before functional code changes are made.
