@@ -25,6 +25,13 @@ export async function initAuth({ openModal, closeModal } = {}) {
     }
   };
 
+  // cart-bridge.js owns auth interactions on the main marketplace page.
+  // Avoid registering a second click handler that would open two auth flows.
+  if (document.documentElement.dataset.soukisCartBridgeInstalled === 'true') {
+    await render();
+    return;
+  }
+
   authBtn.addEventListener('click', async () => {
     const { data: { user } } = await db.auth.getUser();
     if (user) {
