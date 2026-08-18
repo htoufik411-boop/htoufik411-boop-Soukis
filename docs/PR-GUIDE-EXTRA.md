@@ -1,0 +1,1 @@
+Use the QA checklist and security baseline as the release evidence for the Soukis pull request.
