@@ -1,5 +1,4 @@
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { addToCart } from './cart-ui.js';
 import { SOUKIS_CONFIG } from './app-config.js';
 import { getCurrentLanguage } from './i18n.js';
 
@@ -25,21 +24,7 @@ export function installProductsUI(){
   else items.sort((a,b)=>new Date(b.created_at||0)-new Date(a.created_at||0));
   if(count)count.textContent=text(`${items.length} منتج`,`${items.length} produit${items.length>1?'s':''}`,`${items.length} product${items.length===1?'':'s'}`);
   grid.innerHTML=items.length?items.map(card).join(''):`<div class="empty">${text('لا توجد منتجات مطابقة حاليًا.','Aucun produit correspondant.','No matching products found.')}</div>`;
-  grid.querySelectorAll('[data-add-listing]').forEach(button=>button.addEventListener('click',onAddToCart));
  };
- async function onAddToCart(event){
-  event.preventDefault();event.stopPropagation();
-  const button=event.currentTarget;const listingId=button.dataset.addListing;if(!listingId)return;
-  button.disabled=true;
-  try{
-   const result=await addToCart(listingId,1);
-   if(result.ok){button.textContent=`✓ ${text('تمت الإضافة','Ajouté','Added')}`;window.dispatchEvent(new CustomEvent('soukis:cart-changed'));return;}
-   if(result.reason==='auth_required'){button.textContent=text('سجّل الدخول أولًا','Connectez-vous d’abord','Sign in first');return;}
-   console.error('Soukis addToCart failed',result.error||result.reason);
-   button.textContent=text('تعذر الإضافة','Échec de l’ajout','Add failed');
-  }catch(error){console.error('Soukis addToCart exception',error);button.textContent=text('حدث خطأ','Erreur','Error');}
-  finally{setTimeout(()=>{button.disabled=false;},500);}
- }
  search?.addEventListener('input',render);category?.addEventListener('change',render);sort?.addEventListener('change',render);
  window.addEventListener('soukis:listing-created',()=>load().then(render));window.addEventListener('soukis:listings-changed',()=>load().then(render));window.addEventListener('soukis:language-changed',()=>{fillFilters(true);render();});
  load().then(render);
