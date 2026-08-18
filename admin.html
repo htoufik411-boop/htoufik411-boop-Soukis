@@ -4,7 +4,7 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Soukis — Admin</title>
 <style>
-body{font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:#f6f7fb;color:#111827;margin:0}header{background:#0f172a;color:#fff;padding:18px 5%;display:flex;justify-content:space-between;align-items:center}main{width:90%;max-width:1200px;margin:30px auto}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:20px}.value{font-size:30px;font-weight:900;margin-top:5px}.panel{margin-top:22px;background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:20px}.row{padding:12px 0;border-bottom:1px solid #e5e7eb}.muted{color:#6b7280}@media(max-width:700px){.grid{grid-template-columns:1fr}}
+body{font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:#f6f7fb;color:#111827;margin:0}header{background:#0f172a;color:#fff;padding:18px 5%;display:flex;justify-content:space-between;align-items:center}main{width:90%;max-width:1200px;margin:30px auto}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}.card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:20px}.value{font-size:30px;font-weight:900;margin-top:5px}.panel{margin-top:22px;background:#fff;border:1px solid #e5e7eb;border-radius:18px;padding:20px}.row{padding:12px 0;border-bottom:1px solid #e5e7eb;display:flex;justify-content:space-between;gap:12px;align-items:center}.muted{color:#6b7280}select,button{font:inherit;border:1px solid #e5e7eb;border-radius:10px;padding:8px 10px;background:#fff}button{cursor:pointer;background:#0f172a;color:#fff}.msg{margin-top:12px;padding:10px;border-radius:10px;background:#f1f5f9}@media(max-width:700px){.grid{grid-template-columns:1fr}.row{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
 <body>
@@ -12,32 +12,34 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:
 <main>
 <p id="admin-status" class="muted">جارٍ التحقق من الصلاحيات…</p>
 <section id="dashboard" hidden>
-<div class="grid"><div class="card"><div class="muted">المنتجات</div><div id="products-count" class="value">—</div></div><div class="card"><div class="muted">الطلبات</div><div id="orders-count" class="value">—</div></div><div class="card"><div class="muted">المستخدم الحالي</div><div id="admin-email" class="value" style="font-size:16px">—</div></div></div>
-<div class="panel"><h2>آخر المنتجات</h2><div id="products-list" class="muted">جارٍ التحميل…</div></div>
-<div class="panel"><h2>آخر الطلبات</h2><div id="orders-list" class="muted">جارٍ التحميل…</div></div>
+<div class="grid"><div class="card"><div class="muted">المنتجات المعروضة</div><div id="products-count" class="value">—</div></div><div class="card"><div class="muted">آخر الطلبات المحملة</div><div id="orders-count" class="value">—</div></div><div class="card"><div class="muted">المستخدم الحالي</div><div id="admin-email" class="value" style="font-size:16px">—</div></div></div>
+<div class="panel"><h2>إدارة المنتجات</h2><div id="products-list" class="muted">جارٍ التحميل…</div></div>
+<div class="panel"><h2>إدارة الطلبات</h2><div id="orders-list" class="muted">جارٍ التحميل…</div><div id="message" class="msg" hidden></div></div>
 </section>
 </main>
 <script type="module">
 import { db } from './supabase.js';
-const status=document.getElementById('admin-status'),dashboard=document.getElementById('dashboard');
+const status=document.getElementById('admin-status'),dashboard=document.getElementById('dashboard'),message=document.getElementById('message');
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-try{
- const {data:{user}}=await db.auth.getUser();
- if(!user) throw new Error('Access denied');
- const {data:isAdmin,error:adminError}=await db.rpc('is_admin');
- if(adminError||isAdmin!==true) throw new Error('Access denied');
- document.getElementById('admin-email').textContent=user.email||'Admin';
+const orderStatuses=['pending','confirmed','processing','shipped','delivered','cancelled'];
+const listingStatuses=['active','sold','hidden','pending'];
+function flash(text){message.textContent=text;message.hidden=false;setTimeout(()=>message.hidden=true,3000)}
+async function load(){
  const [{data:products,error:productsError},{data:orders,error:ordersError}]=await Promise.all([
-   db.from('listings').select('id,title,price,currency,status,created_at').order('created_at',{ascending:false}).limit(10),
-   db.from('orders').select('id,status,total,currency,created_at').order('created_at',{ascending:false}).limit(10)
+   db.from('listings').select('id,title,price,currency,status,created_at').order('created_at',{ascending:false}).limit(20),
+   db.from('orders').select('id,status,total,currency,created_at').order('created_at',{ascending:false}).limit(20)
  ]);
- if(productsError) throw productsError;
- if(ordersError) throw ordersError;
- document.getElementById('products-count').textContent=products.length;
- document.getElementById('orders-count').textContent=orders.length;
- document.getElementById('products-list').innerHTML=products.length?products.map(p=>`<div class="row"><strong>${esc(p.title)}</strong><br><span class="muted">${esc(p.price)} ${esc(p.currency||'')} · ${esc(p.status||'')}</span></div>`).join(''):'لا توجد منتجات';
- document.getElementById('orders-list').innerHTML=orders.length?orders.map(o=>`<div class="row"><strong>#${esc(o.id)}</strong><br><span class="muted">${esc(o.status)} · ${esc(o.total)} ${esc(o.currency||'')}</span></div>`).join(''):'لا توجد طلبات';
- status.textContent='تم التحقق من صلاحيات Admin.';dashboard.hidden=false;
+ if(productsError) throw productsError;if(ordersError) throw ordersError;
+ document.getElementById('products-count').textContent=products.length;document.getElementById('orders-count').textContent=orders.length;
+ document.getElementById('products-list').innerHTML=products.length?products.map(p=>`<div class="row"><div><strong>${esc(p.title)}</strong><br><span class="muted">${esc(p.price)} ${esc(p.currency||'')}</span></div><select data-product="${esc(p.id)}" aria-label="Product status">${listingStatuses.map(s=>`<option value="${s}" ${p.status===s?'selected':''}>${s}</option>`).join('')}</select></div>`).join(''):'لا توجد منتجات';
+ document.getElementById('orders-list').innerHTML=orders.length?orders.map(o=>`<div class="row"><div><strong>#${esc(o.id)}</strong><br><span class="muted">${esc(o.total)} ${esc(o.currency||'')}</span></div><select data-order="${esc(o.id)}" aria-label="Order status">${orderStatuses.map(s=>`<option value="${s}" ${o.status===s?'selected':''}>${s}</option>`).join('')}</select></div>`).join(''):'لا توجد طلبات';
+ document.querySelectorAll('[data-product]').forEach(el=>el.addEventListener('change',async()=>{const id=el.dataset.product;const value=el.value;const {error}=await db.from('listings').update({status:value}).eq('id',id);if(error){flash('تعذر تحديث المنتج');await load();}else flash('تم تحديث حالة المنتج');}));
+ document.querySelectorAll('[data-order]').forEach(el=>el.addEventListener('change',async()=>{const id=el.dataset.order;const value=el.value;const {error}=await db.from('orders').update({status:value}).eq('id',id);if(error){flash('تعذر تحديث الطلب');await load();}else flash('تم تحديث حالة الطلب');}));
+}
+try{
+ const {data:{user}}=await db.auth.getUser();if(!user) throw new Error('Access denied');
+ const {data:isAdmin,error:adminError}=await db.rpc('is_admin');if(adminError||isAdmin!==true) throw new Error('Access denied');
+ document.getElementById('admin-email').textContent=user.email||'Admin';await load();status.textContent='تم التحقق من صلاحيات Admin.';dashboard.hidden=false;
 }catch(e){status.textContent='تم رفض الوصول أو تعذر تحميل البيانات.';console.error(e)}
 </script>
 </body></html>
