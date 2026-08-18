@@ -1,4 +1,5 @@
 import { db } from './supabase.js';
+import { t } from './i18n.js';
 
 export async function initAuth({ openModal, closeModal } = {}) {
   const authBtn = document.getElementById('authBtn');
@@ -8,11 +9,19 @@ export async function initAuth({ openModal, closeModal } = {}) {
   const render = async () => {
     const { data: { user } } = await db.auth.getUser();
     if (user) {
-      authBtn.textContent = 'تسجيل الخروج';
-      sessionEl && (sessionEl.textContent = user.email || 'مسجل الدخول');
+      authBtn.textContent = t('logout');
+      authBtn.dataset.loggedIn = 'true';
+      if (sessionEl) {
+        sessionEl.textContent = user.email || t('loggedIn');
+        sessionEl.dataset.loggedIn = 'true';
+      }
     } else {
-      authBtn.textContent = 'تسجيل الدخول';
-      sessionEl && (sessionEl.textContent = 'غير مسجل');
+      authBtn.textContent = t('login');
+      delete authBtn.dataset.loggedIn;
+      if (sessionEl) {
+        sessionEl.textContent = t('notLogged');
+        delete sessionEl.dataset.loggedIn;
+      }
     }
   };
 
@@ -24,15 +33,19 @@ export async function initAuth({ openModal, closeModal } = {}) {
       return;
     }
     if (!openModal) return;
-    openModal(`<h2>تسجيل الدخول</h2><form id="authForm" class="form"><input id="authEmail" type="email" autocomplete="email" placeholder="البريد الإلكتروني" required><input id="authPassword" type="password" autocomplete="current-password" placeholder="كلمة المرور" minlength="6" required><button class="blue" type="submit">تسجيل الدخول</button><button type="button" id="signupMode">إنشاء حساب</button><div id="authMsg" class="msg" aria-live="polite"></div></form>`);
+    openModal(`<h2>${t('login')}</h2><form id="authForm" class="form"><input id="authEmail" type="email" autocomplete="email" placeholder="${t('email')}" required><input id="authPassword" type="password" autocomplete="current-password" placeholder="${t('password')}" minlength="6" required><button class="blue" type="submit">${t('login')}</button><button type="button" id="signupMode">${t('signup')}</button><div id="authMsg" class="msg" aria-live="polite"></div></form>`);
     const form = document.getElementById('authForm');
     const msg = document.getElementById('authMsg');
     document.getElementById('signupMode')?.addEventListener('click', async () => {
       const email = document.getElementById('authEmail').value.trim();
       const password = document.getElementById('authPassword').value;
-      if (!email || password.length < 6) { msg.textContent = 'أدخل بريدًا صحيحًا وكلمة مرور من 6 أحرف على الأقل.'; return; }
+      if (!email || password.length < 6) {
+        msg.textContent = t('invalidCredentials');
+        return;
+      }
       const { error } = await db.auth.signUp({ email, password });
-      msg.textContent = error ? error.message : 'تم إنشاء الحساب. تحقق من بريدك الإلكتروني إذا طُلب منك ذلك.';
+      msg.textContent = error ? error.message : t('signupSuccess');
+      if (!error) closeModal?.();
       await render();
     });
     form?.addEventListener('submit', async e => {
@@ -47,5 +60,6 @@ export async function initAuth({ openModal, closeModal } = {}) {
   });
 
   db.auth.onAuthStateChange(() => { render(); });
+  window.addEventListener('soukis:language-changed', () => { render(); });
   await render();
 }
