@@ -1,0 +1,1 @@
+Before merge: inspect diff, run CI, request Copilot review, validate findings, and complete runtime QA.
