@@ -1,0 +1,1 @@
+Baseline CI checks are defined in .github/workflows/qa.yml.
