@@ -3,23 +3,6 @@ import { SOUKIS_CONFIG } from './app-config.js';
 
 const supabase = createClient(SOUKIS_CONFIG.supabaseUrl, SOUKIS_CONFIG.supabasePublishableKey);
 
-async function getOrCreateCart(userId) {
-  const { data: existing, error: readError } = await supabase
-    .from('carts')
-    .select('id')
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (readError) return { ok: false, error: readError };
-  if (existing) return { ok: true, cartId: existing.id };
-
-  const { data: created, error: createError } = await supabase
-    .from('carts')
-    .insert({ user_id: userId })
-    .select('id')
-    .single();
-  return createError ? { ok: false, error: createError } : { ok: true, cartId: created.id };
-}
-
 export async function addToCart(listingId, quantity = 1) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, reason: 'auth_required' };
@@ -36,9 +19,6 @@ export async function addToCart(listingId, quantity = 1) {
     .maybeSingle();
   if (listingError) return { ok: false, error: listingError };
   if (!listing) return { ok: false, reason: 'listing_not_found' };
-
-  const cart = await getOrCreateCart(user.id);
-  if (!cart.ok) return cart;
 
   const { data: existing, error: readError } = await supabase
     .from('cart_items')
@@ -66,9 +46,6 @@ export async function addToCart(listingId, quantity = 1) {
 export async function getCart() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { ok: false, reason: 'auth_required', items: [] };
-
-  const cart = await getOrCreateCart(user.id);
-  if (!cart.ok) return { ...cart, items: [] };
 
   const { data, error } = await supabase
     .from('cart_items')
