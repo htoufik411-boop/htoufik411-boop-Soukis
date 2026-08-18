@@ -14,7 +14,7 @@ const plans = {
     fr: { title: '👑 Max', text: 'Une formule avancée pour les vendeurs actifs, avec plus de visibilité et d’outils.' },
     en: { title: '👑 Max', text: 'An advanced plan for active sellers with more visibility and growth tools.' }
   },
-  maxPro: {
+  max_pro: {
     ar: { title: '💎 Max Pro', text: 'أعلى باقة للبائعين المحترفين مع أقصى مستوى من الظهور والمزايا.' },
     fr: { title: '💎 Max Pro', text: 'La formule premium pour les vendeurs professionnels, avec le maximum de visibilité et d’avantages.' },
     en: { title: '💎 Max Pro', text: 'The top plan for professional sellers, with maximum visibility and benefits.' }
@@ -43,14 +43,17 @@ export function installMonetization({ openModal }) {
     makeButton('boostBtn', 'boost'),
     makeButton('premiumBtn', 'premium'),
     makeButton('maxBtn', 'max'),
-    makeButton('maxProBtn', 'maxPro')
+    makeButton('maxProBtn', 'max_pro')
   );
 
-  document.getElementById('lang')?.addEventListener('change', () => {
+  const updateLabels = () => {
     const lang = document.getElementById('lang')?.value || 'ar';
-    for (const [id, key] of [['boostBtn','boost'],['premiumBtn','premium'],['maxBtn','max'],['maxProBtn','maxPro']]) {
+    for (const [id, key] of [['boostBtn','boost'],['premiumBtn','premium'],['maxBtn','max'],['maxProBtn','max_pro']]) {
       const button = document.getElementById(id);
       if (button) button.textContent = plans[key][lang]?.title || plans[key].ar.title;
     }
-  });
+  };
+
+  document.getElementById('lang')?.addEventListener('change', updateLabels);
+  window.addEventListener('soukis:language-changed', updateLabels);
 }
