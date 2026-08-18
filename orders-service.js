@@ -20,12 +20,12 @@ export async function createOrderFromCart({ shippingName, shippingPhone, shippin
     return { ok: false, error };
   }
 
-  // The current Supabase project uses bigint order IDs and user_id on orders.
+  // The current Supabase project uses UUID order IDs and buyer_id on orders.
   const { data: order, error: orderError } = await supabase
     .from('orders')
     .select('*')
     .eq('id', orderId)
-    .eq('user_id', user.id)
+    .eq('buyer_id', user.id)
     .single();
 
   if (orderError) return { ok: false, error: orderError };
