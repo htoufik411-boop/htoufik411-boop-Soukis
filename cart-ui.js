@@ -43,7 +43,7 @@ export async function addToCart(listingId, quantity = 1) {
   const { data: existing, error: readError } = await supabase
     .from('cart_items')
     .select('id, quantity')
-    .eq('cart_id', cart.cartId)
+    .eq('user_id', user.id)
     .eq('listing_id', listingId)
     .maybeSingle();
   if (readError) return { ok: false, error: readError };
@@ -53,13 +53,13 @@ export async function addToCart(listingId, quantity = 1) {
       .from('cart_items')
       .update({ quantity: Number(existing.quantity) + safeQuantity })
       .eq('id', existing.id)
-      .eq('cart_id', cart.cartId);
+      .eq('user_id', user.id);
     return error ? { ok: false, error } : { ok: true };
   }
 
   const { error } = await supabase
     .from('cart_items')
-    .insert({ cart_id: cart.cartId, listing_id: listingId, quantity: safeQuantity });
+    .insert({ user_id: user.id, listing_id: listingId, quantity: safeQuantity });
   return error ? { ok: false, error } : { ok: true };
 }
 
@@ -73,7 +73,7 @@ export async function getCart() {
   const { data, error } = await supabase
     .from('cart_items')
     .select('id, listing_id, quantity, listings(*)')
-    .eq('cart_id', cart.cartId)
+    .eq('user_id', user.id)
     .order('created_at', { ascending: false });
 
   return error ? { ok: false, error, items: [] } : { ok: true, items: data || [] };
