@@ -1,45 +1,17 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SOUKIS_CONFIG } from './app-config.js';
-
-const db = createClient(SOUKIS_CONFIG.supabaseUrl, SOUKIS_CONFIG.supabasePublishableKey);
+import { addToCart, getCart } from './cart-ui.js';
 
 async function addListingToRemoteCart(listingId) {
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) {
-    window.dispatchEvent(new CustomEvent('soukis:auth-required'));
+  const result = await addToCart(listingId, 1);
+  if (!result.ok) {
+    if (result.reason === 'auth_required') {
+      window.dispatchEvent(new CustomEvent('soukis:auth-required'));
+    }
     return false;
   }
 
-  const { error: cartError } = await db
-    .from('carts')
-    .upsert({ user_id: user.id, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
-  if (cartError) throw cartError;
-
-  const { data: existing, error: readError } = await db
-    .from('cart_items')
-    .select('id, quantity')
-    .eq('user_id', user.id)
-    .eq('listing_id', listingId)
-    .maybeSingle();
-  if (readError) throw readError;
-
-  if (existing) {
-    const { error } = await db.from('cart_items')
-      .update({ quantity: Number(existing.quantity || 0) + 1 })
-      .eq('id', existing.id);
-    if (error) throw error;
-  } else {
-    const { error } = await db.from('cart_items')
-      .insert({ user_id: user.id, listing_id: listingId, quantity: 1 });
-    if (error) throw error;
-  }
-
-  const { count, error: countError } = await db
-    .from('cart_items')
-    .select('quantity', { count: 'exact', head: false })
-    .eq('user_id', user.id);
-  if (!countError) {
-    const total = (count || []).reduce((sum, row) => sum + Number(row.quantity || 0), 0);
+  const cart = await getCart();
+  if (cart.ok) {
+    const total = cart.items.reduce((sum, row) => sum + Number(row.quantity || 0), 0);
     const badge = document.querySelector('#cartCount');
     if (badge) badge.textContent = String(total);
   }
