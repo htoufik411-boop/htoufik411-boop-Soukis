@@ -12,20 +12,13 @@ const modules = [
 ];
 
 const safe = async (name, loader) => {
-  try {
-    return await loader();
-  } catch (error) {
-    console.error(`[Soukis] ${name} failed to load`, error);
-    return null;
-  }
+  try { return await loader(); }
+  catch (error) { console.error(`[Soukis] ${name} failed to load`, error); return null; }
 };
 
 const safeInit = (name, initializer) => {
-  try {
-    initializer();
-  } catch (error) {
-    console.error(`[Soukis] ${name} failed to initialize`, error);
-  }
+  try { initializer(); }
+  catch (error) { console.error(`[Soukis] ${name} failed to initialize`, error); }
 };
 
 export async function bootSoukis() {
@@ -34,20 +27,11 @@ export async function bootSoukis() {
 
   const modal = document.getElementById('modal');
   const body = document.getElementById('modalBody');
-  const openModal = html => {
-    if (!body || !modal) return;
-    body.innerHTML = html;
-    modal.hidden = false;
-  };
-  const closeModal = () => {
-    if (modal) modal.hidden = true;
-  };
-
+  const openModal = html => { if (body && modal) { body.innerHTML = html; modal.hidden = false; } };
+  const closeModal = () => { if (modal) modal.hidden = true; };
   document.getElementById('close')?.addEventListener('click', closeModal);
 
-  const results = await Promise.all(
-    modules.map(async ([name, loader]) => [name, await safe(name, loader)])
-  );
+  const results = await Promise.all(modules.map(async ([name, loader]) => [name, await safe(name, loader)]));
   const loaded = Object.fromEntries(results);
 
   safeInit('i18n', () => loaded.i18n?.installI18n?.());
@@ -57,13 +41,8 @@ export async function bootSoukis() {
   safeInit('monetization', () => loaded.monetization?.installMonetization?.({ openModal }));
   safeInit('corporate-ads', () => loaded['corporate-ads']?.installCorporateAds?.({ openModal }));
   safeInit('my-products', () => {
-    if (loaded['my-products']?.openMyProducts) {
-      document.getElementById('myProductsBtn')?.addEventListener(
-        'click',
-        () => loaded['my-products'].openMyProducts(openModal, closeModal),
-        { once: false }
-      );
-    }
+    if (!loaded['my-products']?.openMyProducts) return;
+    document.getElementById('myProductsBtn')?.addEventListener('click', () => loaded['my-products'].openMyProducts(openModal, closeModal));
   });
   safeInit('admin', () => loaded.admin?.initAdmin?.());
   safeInit('auth', () => loaded.auth?.initAuth?.({ openModal, closeModal }));
@@ -71,18 +50,17 @@ export async function bootSoukis() {
   safeInit('orders', () => {
     const orders = loaded.orders;
     if (!orders?.getMyOrders || !orders?.renderMyOrders || document.getElementById('myOrdersBtn')) return;
-
+    const t = loaded.i18n?.t || (key => key);
     const button = document.createElement('button');
     button.id = 'myOrdersBtn';
     button.className = 'pill';
     button.dataset.i18n = 'myOrders';
-    button.textContent = loaded.i18n?.t?.('myOrders') || 'طلباتي';
+    button.textContent = t('myOrders');
     document.querySelector('.userbar')?.appendChild(button);
 
     button.addEventListener('click', async () => {
       try {
         const result = await orders.getMyOrders();
-        const t = loaded.i18n?.t || (key => key);
         if (!result.ok) {
           openModal(`<h2>${t('myOrders')}</h2><p class="msg">${t('adminLoginRequired')}</p>`);
           return;
@@ -91,7 +69,7 @@ export async function bootSoukis() {
         orders.renderMyOrders(document.getElementById('myOrdersList'), result.orders);
       } catch (error) {
         console.error('[Soukis] Orders UI failed', error);
-        openModal('<h2>طلباتي</h2><p class="msg">تعذر تحميل الطلبات حاليًا.</p>');
+        openModal(`<h2>${t('myOrders')}</h2><p class="msg">${t('adminLoginRequired')}</p>`);
       }
     });
   });
