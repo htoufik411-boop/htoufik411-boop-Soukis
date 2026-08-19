@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate repository structure
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test -d supabase/migrations
+          echo "Repository structure OK"
+
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          set -euo pipefail
+          files=$(find . -type f -name '*.js' -not -path './node_modules/*' -not -path './.git/*')
+          if [ -n "$files" ]; then
+            while IFS= read -r file; do
+              node --check "$file"
+            done <<< "$files"
+          fi
+          echo "JavaScript syntax OK"
+
+      - name: Validate SQL migration files are non-empty
+        shell: bash
+        run: |
+          set -euo pipefail
+          find supabase/migrations -type f -name '*.sql' -print0 | while IFS= read -r -d '' file; do
+            test -s "$file"
+          done
+          echo "SQL migration files OK"
