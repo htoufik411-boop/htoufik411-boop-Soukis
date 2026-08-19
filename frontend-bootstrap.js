@@ -43,7 +43,7 @@ export async function bootSoukis() {
     if (modal) modal.hidden = true;
   };
 
-  document.getElementById('close')?.addEventListener('click', closeModal, { once: true });
+  document.getElementById('close')?.addEventListener('click', closeModal);
 
   const results = await Promise.all(
     modules.map(async ([name, loader]) => [name, await safe(name, loader)])
