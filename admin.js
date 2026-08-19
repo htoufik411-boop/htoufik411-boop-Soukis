@@ -4,6 +4,8 @@ import { t } from './i18n.js';
 export function initAdmin() {
   const button = document.getElementById('admin');
   if (!button) return;
+  if (button.dataset.soukisAdminInstalled === 'true') return;
+  button.dataset.soukisAdminInstalled = 'true';
 
   button.addEventListener('click', async (event) => {
     event.preventDefault();
