@@ -12,6 +12,7 @@ const isActivePromotion=p=>p.featured===true&&p.promoted_until&&new Date(p.promo
 const promoRank=p=>{if(!isActivePromotion(p))return 0;return({boost:1,premium:2,max:3,max_pro:4}[p.promotion_type]||1);};
 const promoText=p=>({boost:'🚀 Boost',premium:'⭐ Premium',max:'👑 Max',max_pro:'💎 Max Pro'}[p.promotion_type]||'');
 let installed=false;
+let loadGeneration=0;
 
 export function installProductsUI(){
  if(installed)return;
@@ -32,8 +33,10 @@ export function installProductsUI(){
  window.addEventListener('soukis:listing-created',()=>load().then(render));window.addEventListener('soukis:listings-changed',()=>load().then(render));window.addEventListener('soukis:promotion-changed',()=>load().then(render));window.addEventListener('soukis:language-changed',()=>{fillFilters(true);render();});
  load().then(render);
  async function load(){
+  const generation=++loadGeneration;
   grid.innerHTML=`<div class="empty">${text('جاري تحميل المنتجات…','Chargement des produits…','Loading products…')}</div>`;
   const [listingResult,catResult,cityResult]=await Promise.all([db.from('listings').select('*').order('created_at',{ascending:false}),db.from('categories').select('id,name_ar,name_fr,name_en').order('name_en'),db.from('cities').select('id,name_ar,name_fr,name_en').order('name_en')]);
+  if(generation!==loadGeneration)return;
   if(listingResult.error){console.error('Soukis listings load failed:',listingResult.error);grid.innerHTML=`<div class="empty">${text('تعذر تحميل المنتجات. تحقق من إعدادات Supabase.','Impossible de charger les produits. Vérifiez Supabase.','Could not load products. Check Supabase settings.')}`;return;}
   listings=listingResult.data||[];categories=catResult.data||[];cities=cityResult.data||[];fillFilters(false);
  }
