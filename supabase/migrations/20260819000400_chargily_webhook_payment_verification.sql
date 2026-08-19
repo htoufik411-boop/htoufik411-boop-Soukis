@@ -111,40 +111,57 @@ declare
   v_payment public.corporate_ad_payments%rowtype;
   v_request public.corporate_ad_requests%rowtype;
   v_campaign public.corporate_ad_campaigns%rowtype;
+  v_event_payment public.corporate_ad_payments%rowtype;
+  v_checkout_payment public.corporate_ad_payments%rowtype;
 begin
   if nullif(trim(p_event_id), '') is null then raise exception 'event_id_required'; end if;
   if nullif(trim(p_checkout_id), '') is null then raise exception 'checkout_id_required'; end if;
   if p_currency <> 'DZD' then raise exception 'invalid_currency'; end if;
   if p_amount is null or p_amount <= 0 then raise exception 'invalid_amount'; end if;
 
-  select * into v_payment
+  -- Never infer a payment from request_id alone. The provider checkout identifier
+  -- is the authoritative binding for an automated Chargily payment.
+  select * into v_event_payment
   from public.corporate_ad_payments
   where provider_event_id = p_event_id
-     or provider_checkout_id = p_checkout_id
-  order by case when provider_event_id = p_event_id then 0 else 1 end
-  limit 1
   for update;
 
-  if found and v_payment.status = 'paid' then
-    return jsonb_build_object('status','already_paid','payment_id',v_payment.id,'request_id',v_payment.request_id);
+  select * into v_checkout_payment
+  from public.corporate_ad_payments
+  where provider_checkout_id = p_checkout_id
+  for update;
+
+  if found and v_event_payment.id is distinct from v_checkout_payment.id then
+    raise exception 'provider_identifier_mismatch';
   end if;
 
-  if not found then
-    select * into v_payment
-    from public.corporate_ad_payments
-    where request_id = p_request_id
-      and payment_provider = 'chargily'
-      and status = 'pending'
-    order by created_at desc
-    limit 1
-    for update;
+  if v_event_payment.id is not null then
+    v_payment := v_event_payment;
+  elsif v_checkout_payment.id is not null then
+    v_payment := v_checkout_payment;
+  else
+    raise exception 'checkout_payment_not_found';
   end if;
 
-  if not found then raise exception 'pending_chargily_payment_not_found'; end if;
-  if v_payment.payment_provider <> 'chargily' then raise exception 'invalid_payment_provider'; end if;
+  -- A duplicate delivery is idempotent only when all provider-bound fields
+  -- still identify the same payment.
   if v_payment.request_id <> p_request_id then raise exception 'request_mismatch'; end if;
   if v_payment.currency <> p_currency then raise exception 'currency_mismatch'; end if;
   if v_payment.amount_dzd <> p_amount then raise exception 'amount_mismatch'; end if;
+  if v_payment.payment_provider <> 'chargily' then raise exception 'invalid_payment_provider'; end if;
+  if v_payment.provider_checkout_id is not null and v_payment.provider_checkout_id <> p_checkout_id then
+    raise exception 'checkout_id_mismatch';
+  end if;
+
+  if v_payment.status = 'paid' then
+    return jsonb_build_object(
+      'status','already_paid',
+      'payment_id',v_payment.id,
+      'request_id',v_payment.request_id
+    );
+  end if;
+
+  if v_payment.status <> 'pending' then raise exception 'invalid_payment_state'; end if;
 
   select * into v_request
   from public.corporate_ad_requests
