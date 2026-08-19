@@ -62,6 +62,7 @@ begin
   if not found then raise exception 'request_not_found'; end if;
   if v_request.status <> 'approved' then raise exception 'request_not_approved'; end if;
   if p_provider not in ('chargily','satim','manual') then raise exception 'invalid_provider'; end if;
+  if p_method is not null and p_method not in ('cib','edahabia','qr','cash','other') then raise exception 'invalid_payment_method'; end if;
   if exists (select 1 from public.corporate_ad_payments where request_id=p_request_id and status in ('pending','paid')) then raise exception 'payment_already_exists'; end if;
   insert into public.corporate_ad_payments(request_id,user_id,amount_dzd,payment_provider,payment_method)
   values (v_request.id,v_request.user_id,v_request.amount_dzd,p_provider,p_method)
