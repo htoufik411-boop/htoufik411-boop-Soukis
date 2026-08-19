@@ -18,8 +18,8 @@ export async function bootSoukis() {
   const openModal=html=>{if(body&&modal){body.innerHTML=html;modal.hidden=false;}};
   const closeModal=()=>{if(modal)modal.hidden=true;};
   document.getElementById('close')?.addEventListener('click',closeModal,{once:true});
-  const loaded={};
-  for(const [name,loader] of modules) loaded[name]=await safe(name,loader);
+  const results=await Promise.all(modules.map(async([name,loader])=>[name,await safe(name,loader)]));
+  const loaded=Object.fromEntries(results);
   loaded.i18n?.installI18n?.();
   loaded.cart?.installCartBridge?.();
   loaded.products?.installProductsUI?.();
