@@ -1,0 +1,8 @@
+{
+  "name": "soukis-validation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test:chargily": "node scripts/validate-chargily.mjs"
+  }
+}
