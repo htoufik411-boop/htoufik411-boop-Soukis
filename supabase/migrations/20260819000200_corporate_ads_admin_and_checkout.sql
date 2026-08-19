@@ -1,6 +1,18 @@
 -- Corporate Ads: secure approval, checkout creation, and payment activation.
 -- All privileged transitions are performed server-side.
 
+-- PR #10 may already have created this function. Drop it before recreating it so
+-- this migration is safe even when the previous definition has a different
+-- return type.
+drop function if exists public.admin_confirm_corporate_ad_payment(uuid,text,text);
+
+-- Prevent two concurrent checkout attempts from creating multiple live payments
+-- for the same ad request. The RPC below still performs a friendly pre-check,
+-- while this database constraint is the authoritative race-safe guard.
+create unique index if not exists corporate_ad_payments_one_live_per_request_idx
+  on public.corporate_ad_payments(request_id)
+  where status in ('pending','paid');
+
 create or replace function public.admin_review_corporate_ad(
   p_request_id uuid,
   p_status text,
@@ -89,6 +101,9 @@ begin
   returning * into v_payment;
 
   return v_payment;
+exception
+  when unique_violation then
+    raise exception 'payment_already_exists';
 end;
 $$;
 
