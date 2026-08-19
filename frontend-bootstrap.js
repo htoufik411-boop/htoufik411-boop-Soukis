@@ -27,7 +27,7 @@ export async function bootSoukis() {
 
   const modal = document.getElementById('modal');
   const body = document.getElementById('modalBody');
-  const openModal = html => { if (body && modal) { body.innerHTML = html; modal.hidden = false; } };
+  const openModal = html => { if (body && modal) { body.innerHTML = html; modal.hidden = false; window.dispatchEvent(new CustomEvent('soukis:modal-opened')); } };
   const closeModal = () => { if (modal) modal.hidden = true; };
   document.getElementById('close')?.addEventListener('click', closeModal);
 
@@ -72,6 +72,20 @@ export async function bootSoukis() {
         openModal(`<h2>${t('myOrders')}</h2><p class="msg">${t('ordersLoadError')}</p>`);
       }
     });
+  });
+
+  // Keep dynamically rendered modal content synchronized with the active language.
+  window.addEventListener('soukis:language-changed', () => {
+    const lang = loaded.i18n?.getCurrentLanguage?.() || document.documentElement.lang || 'ar';
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      if (loaded.i18n?.t && key) el.textContent = loaded.i18n.t(key);
+    });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+      const key = el.dataset.i18nPlaceholder;
+      if (loaded.i18n?.t && key) el.placeholder = loaded.i18n.t(key);
+    });
+    document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
   });
 }
 
