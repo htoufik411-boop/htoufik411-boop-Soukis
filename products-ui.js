@@ -12,13 +12,16 @@ const isActivePromotion=p=>p.featured===true && p.promoted_until && new Date(p.p
 const promoRank=p=>{if(!isActivePromotion(p))return 0;return ({boost:1,premium:2,max:3,max_pro:4}[p.promotion_type]||1);};
 const promoText=p=>({boost:text('🚀 Boost','🚀 Boost','🚀 Boost'),premium:text('⭐ Premium','⭐ Premium','⭐ Premium'),max:text('👑 Max','👑 Max','👑 Max'),max_pro:text('💎 Max Pro','💎 Max Pro','💎 Max Pro')}[p.promotion_type]||'');
 
+let installed=false;
 export function installProductsUI(){
+ if(installed)return;
  const grid=document.querySelector('#grid');if(!grid)return;
+ installed=true;
  const search=document.querySelector('#search'),category=document.querySelector('#category'),sort=document.querySelector('#sort'),count=document.querySelector('#count');
  const render=()=>{
   const q=(search?.value||'').trim().toLowerCase();
   let items=listings.filter(p=>{const cat=categoryLabel(p),city=cityLabel(p);const value=[p.title,p.name,cat,p.description,city,p.location].filter(Boolean).join(' ').toLowerCase();return(!q||value.includes(q))&&(!category?.value||category.value===String(p.category_id||p.category||''));});
-  if(sort?.value==='price-asc')items.sort((a,b)=>Number(a.price||0)-Number(b.price||0));
+  if(sort?.value==='price-asc')items.sort((a,b)=>Number(a.price||0)-Number(b.price||0);
   else if(sort?.value==='price-desc')items.sort((a,b)=>Number(b.price||0)-Number(a.price||0));
   else if(sort?.value==='oldest')items.sort((a,b)=>new Date(a.created_at||0)-new Date(b.created_at||0));
   else items.sort((a,b)=>promoRank(b)-promoRank(a)||new Date(b.created_at||0)-new Date(a.created_at||0));
