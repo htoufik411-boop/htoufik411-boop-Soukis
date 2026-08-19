@@ -10,8 +10,6 @@ const statusLabel=s=>({pending:text('قيد الانتظار','En attente','Pend
 export async function getMyOrders(){
   const {data:{user}}=await supabase.auth.getUser();
   if(!user)return{ok:false,reason:'auth_required',orders:[]};
-  // order_items already stores the purchased title/price snapshot; do not join listings here.
-  // This avoids a fragile PostgREST relationship and keeps historical orders readable even if a listing changes.
   const{data,error}=await supabase.from('orders').select('id,status,total,currency,shipping_name,shipping_phone,shipping_address,created_at,order_items(id,listing_id,title,quantity,unit_price)').eq('user_id',user.id).order('created_at',{ascending:false});
   return error?{ok:false,error,orders:[]}:{ok:true,orders:data||[]};
 }
@@ -19,6 +17,6 @@ export async function getMyOrders(){
 export function renderMyOrders(container,orders){
   if(!container)return;
   if(!orders.length){container.innerHTML=`<div class="msg">${text('لا توجد طلبات بعد.','Aucune commande pour le moment.','No orders yet.')}</div>`;return;}
-  container.innerHTML=orders.map(order=>`<article class="msg" style="margin-bottom:10px"><strong>${text('طلب','Commande','Order')} #${escapeHtml(order.id)}</strong><div>${text('الحالة','Statut','Status')}: ${escapeHtml(statusLabel(order.status))}</div><div>${text('الإجمالي','Total','Total')}: ${Number(order.total||0).toLocaleString(locale())} ${escapeHtml(order.currency||'DA')}</div><div>${text('العنوان','Adresse','Address')}: ${escapeHtml(order.shipping_address||'')}</div></article>`).join('');
+  container.innerHTML=orders.map(order=>`<article class="msg order-card" style="margin-bottom:10px"><strong>${text('طلب','Commande','Order')} #${escapeHtml(order.id)}</strong><div>${text('الحالة','Statut','Status')}: ${escapeHtml(statusLabel(order.status))}</div><div>${text('الإجمالي','Total','Total')}: ${Number(order.total||0).toLocaleString(locale())} ${escapeHtml(order.currency||'DA')}</div><div>${text('العنوان','Adresse','Address')}: ${escapeHtml(order.shipping_address||'')}</div>${order.order_items?.length?`<div class="order-items">${order.order_items.map(item=>`<div class="order-item"><span>${escapeHtml(item.title||'')}</span><span>${Number(item.quantity||0)} × ${Number(item.unit_price||0).toLocaleString(locale())} ${escapeHtml(order.currency||'DA')}</span></div>`).join('')}</div>`:''}</article>`).join('');
 }
 function escapeHtml(value){return String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
