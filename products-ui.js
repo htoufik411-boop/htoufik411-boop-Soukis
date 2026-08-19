@@ -38,7 +38,9 @@ export function installProductsUI(){
   const [listingResult,catResult,cityResult]=await Promise.all([db.from('listings').select('*').order('created_at',{ascending:false}),db.from('categories').select('id,name_ar,name_fr,name_en').order('name_en'),db.from('cities').select('id,name_ar,name_fr,name_en').order('name_en')]);
   if(generation!==loadGeneration)return;
   if(listingResult.error){console.error('Soukis listings load failed:',listingResult.error);grid.innerHTML=`<div class="empty">${text('تعذر تحميل المنتجات. تحقق من إعدادات Supabase.','Impossible de charger les produits. Vérifiez Supabase.','Could not load products. Check Supabase settings.')}`;return;}
-  listings=listingResult.data||[];categories=catResult.data||[];cities=cityResult.data||[];fillFilters(false);
+  if(catResult.error)console.error('Soukis categories load failed:',catResult.error);
+  if(cityResult.error)console.error('Soukis cities load failed:',cityResult.error);
+  listings=listingResult.data||[];categories=catResult.error?[]:(catResult.data||[]);cities=cityResult.error?[]:(cityResult.data||[]);fillFilters(false);
  }
  function fillFilters(preserve){
   const oldCategory=category?.value||'',oldSort=sort?.value||'';
