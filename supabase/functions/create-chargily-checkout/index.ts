@@ -7,6 +7,7 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 });
 
 const allowedMethods = new Set(["edahabia", "cib", "chargily_app"]);
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
@@ -36,9 +37,13 @@ Deno.serve(async (req) => {
   let input: { request_id?: string };
   try { input = await req.json(); } catch { return json({ error: "invalid_json" }, 400); }
   if (!input.request_id || typeof input.request_id !== "string") return json({ error: "request_id_required" }, 400);
+  if (!uuidPattern.test(input.request_id)) return json({ error: "invalid_request_id" }, 400);
 
   const { data: prepared, error: prepareError } = await userClient.rpc("prepare_chargily_checkout", { p_request_id: input.request_id });
-  if (prepareError) return json({ error: prepareError.message }, 400);
+  if (prepareError) {
+    console.error("Chargily checkout preparation failed", prepareError);
+    return json({ error: "checkout_preparation_failed" }, 400);
+  }
   if (!prepared) return json({ error: "checkout_preparation_failed" }, 500);
   if (prepared.status === "already_created") return json({ status: "already_created", checkout_id: prepared.checkout_id });
 
