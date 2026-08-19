@@ -1,8 +1,27 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
-import { createClient } from "npm:@supabase/supabase-js@2";
-const json=(body:unknown,status=200)=>new Response(JSON.stringify(body),{status,headers:{"content-type":"application/json"}});
-function bytesToHex(bytes:Uint8Array){return Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("")}
-function timingSafeEqual(a:string,b:string){if(a.length!==b.length)return false;let diff=0;for(let i=0;i<a.length;i++)diff|=a.charCodeAt(i)^b.charCodeAt(i);return diff===0}
-async function hmacSha256Hex(secret:string,payload:string){const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);const signature=await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(payload));return bytesToHex(new Uint8Array(signature))}
-function metadataObject(metadata:unknown):Record<string,unknown>{if(metadata&&typeof metadata==="object"&&!Array.isArray(metadata))return metadata as Record<string,unknown>;if(Array.isArray(metadata)&&metadata[0]&&typeof metadata[0]==="object")return metadata[0] as Record<string,unknown>;return {}}
-Deno.serve(async req=>{if(req.method!=="POST")return json({error:"method_not_allowed"},405);const secret=Deno.env.get("CHARGILY_SECRET_KEY"),supabaseUrl=Deno.env.get("SUPABASE_URL"),serviceRoleKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"),expectedLivemode=Deno.env.get("CHARGILY_EXPECTED_LIVEMODE")==="true";if(!secret||!supabaseUrl||!serviceRoleKey)return json({error:"server_not_configured"},500);const signature=req.headers.get("signature"),rawBody=await req.text();if(!signature)return json({error:"missing_signature"},400);const expectedSignature=await hmacSha256Hex(secret,rawBody);if(!timingSafeEqual(signature.toLowerCase(),expectedSignature.toLowerCase()))return json({error:"invalid_signature"},403);let event:any;try{event=JSON.parse(rawBody)}catch{return json({error:"invalid_json"},400)}if(typeof event?.livemode==="boolean"&&event.livemode!==expectedLivemode)return json({error:"livemode_mismatch"},403);if(event?.type!=="checkout.paid")return json({received:true});const checkout=event?.data;if(!checkout||checkout.status!=="paid")return json({error:"invalid_paid_event"},400);const checkoutId=typeof checkout.id==="string"?checkout.id:"",eventId=typeof event.id==="string"?event.id:"",amount=typeof checkout.amount==="number"?checkout.amount:Number(checkout.amount),currency=typeof checkout.currency==="string"?checkout.currency:"DZD",metadata=metadataObject(checkout.metadata),requestId=typeof metadata.request_id==="string"?metadata.request_id:"";if(!eventId||!checkoutId||!requestId||!Number.isFinite(amount))return json({error:"missing_payment_fields"},400);const supabase=createClient(supabaseUrl,serviceRoleKey,{auth:{persistSession:false,autoRefreshToken:false}});const {data,error}=await supabase.rpc("process_chargily_checkout_paid",{p_event_id:eventId,p_checkout_id:checkoutId,p_request_id:requestId,p_amount:amount,p_currency:currency,p_payment_method:typeof checkout.payment_method==="string"?checkout.payment_method:null});if(error){console.error("chargily webhook processing failed",error);return json({error:"payment_processing_failed"},500)}return json({received:true,result:data})});
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } });
+function timingSafeEqual(a: string, b: string) { if (a.length !== b.length) return false; let diff = 0; for (let i=0;i<a.length;i++) diff |= a.charCodeAt(i)^b.charCodeAt(i); return diff===0; }
+
+Deno.serve(async (req: Request) => {
+  if (req.method !== "POST") return new Response("method_not_allowed", { status: 405 });
+  try {
+    const secret=Deno.env.get("CHARGILY_SECRET_KEY"), signature=req.headers.get("signature"), supabaseUrl=Deno.env.get("SUPABASE_URL"), serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    if(!secret||!signature||!supabaseUrl||!serviceKey)return new Response("bad_request",{status:400});
+    const raw=await req.text();
+    const key=await crypto.subtle.importKey("raw",new TextEncoder().encode(secret),{name:"HMAC",hash:"SHA-256"},false,["sign"]);
+    const digest=await crypto.subtle.sign("HMAC",key,new TextEncoder().encode(raw));
+    const computed=Array.from(new Uint8Array(digest)).map(b=>b.toString(16).padStart(2,"0")).join("");
+    if(!timingSafeEqual(computed,signature.trim().toLowerCase()))return new Response("invalid_signature",{status:403});
+    const event=JSON.parse(raw); if(event?.type!=="checkout.paid")return json({received:true});
+    const checkout=event?.data,eventId=typeof event?.id==="string"?event.id:"",checkoutId=typeof checkout?.id==="string"?checkout.id:"",amount=Number(checkout?.amount),currency=typeof checkout?.currency==="string"?checkout.currency:"";
+    if(!eventId||!checkoutId||!Number.isFinite(amount)||!currency)return new Response("invalid_payload",{status:400});
+    const admin=createClient(supabaseUrl,serviceKey);
+    const {data:payment,error:lookupError}=await admin.from("corporate_ad_payments").select("id,request_id,payment_provider").eq("provider_checkout_id",checkoutId).maybeSingle();
+    if(lookupError)throw lookupError; if(!payment)return json({received:true}); if(payment.payment_provider!=="chargily")return new Response("invalid_payment_provider",{status:409});
+    const {error:processError}=await admin.rpc("process_chargily_checkout_paid",{p_event_id:eventId,p_checkout_id:checkoutId,p_request_id:payment.request_id,p_amount:amount,p_currency:currency,p_payment_method:typeof checkout?.payment_method==="string"?checkout.payment_method:null});
+    if(processError){console.error("Chargily webhook processing failed",processError);return new Response("webhook_processing_failed",{status:500});}
+    return json({received:true});
+  }catch(error){console.error("chargily-webhook error",error);return new Response("webhook_error",{status:500});}
+});
