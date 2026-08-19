@@ -16,6 +16,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v5
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
       - name: Validate required entrypoints
         run: |
           set -euo pipefail
@@ -23,19 +27,22 @@ jobs:
       - name: Validate JavaScript syntax
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          files=( *.js )
-          test "${#files[@]}" -gt 0
-          for f in "${files[@]}"; do node --check "$f"; done
-      - name: Validate local modules
+          while IFS= read -r -d '' f; do node --check "$f"; done < <(find . -type f -name '*.js' -not -path './node_modules/*' -not -path './.git/*' -print0)
+      - name: Validate local module references
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import pathlib,re,sys
           from urllib.parse import urlsplit
-          html=pathlib.Path('index.html').read_text(encoding='utf-8')
-          imports=re.findall(r"from\s+['\"](\./[^'\"]+)['\"]",html)
-          missing=[ref for ref in imports if not pathlib.Path(urlsplit(ref).path.lstrip('./')).is_file()]
+          roots=[pathlib.Path('index.html'),*pathlib.Path('.').glob('*.js')]
+          refs=[]
+          for file in roots:
+              text=file.read_text(encoding='utf-8')
+              refs += [(file, r) for r in re.findall(r"(?:from|import\()\s*['\"](\./[^'\"]+)['\"]", text)]
+          missing=[]
+          for source,ref in refs:
+              path=pathlib.Path(urlsplit(ref).path.lstrip('./'))
+              if not path.is_file(): missing.append(f'{source}: {ref}')
           if missing: print('\n'.join(missing)); sys.exit(1)
           PY
       - name: Validate HTML shell
