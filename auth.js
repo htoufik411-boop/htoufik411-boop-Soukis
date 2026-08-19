@@ -32,6 +32,13 @@ export async function initAuth({ openModal, closeModal } = {}) {
     return;
   }
 
+  // Keep auth initialization idempotent if the bootstrap is invoked again.
+  if (authBtn.dataset.soukisAuthInstalled === 'true') {
+    await render();
+    return;
+  }
+  authBtn.dataset.soukisAuthInstalled = 'true';
+
   authBtn.addEventListener('click', async () => {
     const { data: { user } } = await db.auth.getUser();
     if (user) {
