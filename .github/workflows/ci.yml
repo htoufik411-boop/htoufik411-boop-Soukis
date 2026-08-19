@@ -18,27 +18,32 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f index.html
+          test -f admin.html
+          test -f admin.js
+          test -f auth.js
+          test -f app-config.js
+          test -d supabase
           test -d supabase/migrations
-          echo "Repository structure OK"
+          echo "Soukis repository structure OK"
 
       - name: Validate JavaScript syntax
         shell: bash
         run: |
           set -euo pipefail
-          files=$(find . -type f -name '*.js' -not -path './node_modules/*' -not -path './.git/*')
-          if [ -n "$files" ]; then
-            while IFS= read -r file; do
+          find . -type f -name '*.js' -not -path './node_modules/*' -not -path './.git/*' -print0 |
+            while IFS= read -r -d '' file; do
               node --check "$file"
-            done <<< "$files"
-          fi
+            done
           echo "JavaScript syntax OK"
 
       - name: Validate SQL migration files are non-empty
         shell: bash
         run: |
           set -euo pipefail
-          find supabase/migrations -type f -name '*.sql' -print0 | while IFS= read -r -d '' file; do
+          found=0
+          while IFS= read -r -d '' file; do
+            found=1
             test -s "$file"
-          done
+          done < <(find supabase/migrations -type f -name '*.sql' -print0)
+          test "$found" -eq 1
           echo "SQL migration files OK"
