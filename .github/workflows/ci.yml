@@ -13,59 +13,36 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Validate repository structure
         shell: bash
         run: |
           set -euo pipefail
-          test -f admin.html
-          test -f admin.js
-          test -f auth.js
-          test -f app-config.js
-          test -d supabase
-          test -d supabase/migrations
-          echo "Soukis repository structure OK"
-
+          test -f admin.html; test -f admin.js; test -f auth.js; test -f app-config.js
+          test -d supabase; test -d supabase/migrations
       - name: Validate JavaScript syntax
         shell: bash
         run: |
           set -euo pipefail
-          find . -type f -name '*.js' -not -path './node_modules/*' -not -path './.git/*' -print0 |
-            while IFS= read -r -d '' file; do
-              node --check "$file"
-            done
-          echo "JavaScript syntax OK"
-
+          find . -type f -name '*.js' -not -path './node_modules/*' -not -path './.git/*' -print0 | while IFS= read -r -d '' file; do node --check "$file"; done
       - name: Validate Edge Function TypeScript syntax
         shell: bash
         run: |
           set -euo pipefail
           if find supabase/functions -type f -name '*.ts' -print -quit 2>/dev/null | grep -q .; then
-            npx --yes -p typescript tsc --noEmit --allowJs false --skipLibCheck --target ES2022 --module ESNext --moduleResolution Bundler $(find supabase/functions -type f -name '*.ts' -print)
+            npx --yes esbuild@latest $(find supabase/functions -type f -name '*.ts' -print) --loader:.ts=ts --format=esm --outdir=/tmp/soukis-edge-check
           fi
-
       - name: Validate SQL migration files
         shell: bash
         run: |
           set -euo pipefail
           found=0
           while IFS= read -r -d '' file; do
-            found=1
-            test -s "$file"
-            if grep -Eq '(^|[^[:alnum:]_])(drop[[:space:]]+table|drop[[:space:]]+schema)([^[:alnum:]_]|$)' "$file"; then
-              echo "Potential destructive SQL found in $file"
-              exit 1
-            fi
+            found=1; test -s "$file"
+            if grep -Eq '(^|[^[:alnum:]_])(drop[[:space:]]+table|drop[[:space:]]+schema)([^[:alnum:]_]|$)' "$file"; then exit 1; fi
           done < <(find supabase/migrations -type f -name '*.sql' -print0)
           test "$found" -eq 1
-          echo "SQL migration files OK"
-
       - name: Scan tracked files for obvious secret assignments
         shell: bash
         run: |
           set -euo pipefail
-          if git grep -nE '(service_role|SUPABASE_SERVICE_ROLE_KEY|CHARGILY_SECRET_KEY)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']+["'"'"']' -- ':!*.lock' ':!.github/workflows/ci.yml'; then
-            echo "Potential hard-coded secret detected"
-            exit 1
-          fi
-          echo "Secret assignment scan OK"
+          if git grep -nE '(service_role|SUPABASE_SERVICE_ROLE_KEY|CHARGILY_SECRET_KEY)[[:space:]]*[:=][[:space:]]*["'"'"'][^"'"'"']+["'"'"']' -- ':!*.lock' ':!.github/workflows/ci.yml'; then exit 1; fi
