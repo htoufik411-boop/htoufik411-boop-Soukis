@@ -1,0 +1,98 @@
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), {
+  status,
+  headers: { "content-type": "application/json" },
+});
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
+
+async function hmacSha256Hex(secret: string, payload: string): Promise<string> {
+  const key = await crypto.subtle.importKey(
+    "raw",
+    new TextEncoder().encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign"],
+  );
+  const signature = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(payload));
+  return bytesToHex(new Uint8Array(signature));
+}
+
+function metadataObject(metadata: unknown): Record<string, unknown> {
+  if (metadata && typeof metadata === "object" && !Array.isArray(metadata)) return metadata as Record<string, unknown>;
+  if (Array.isArray(metadata) && metadata[0] && typeof metadata[0] === "object") return metadata[0] as Record<string, unknown>;
+  return {};
+}
+
+Deno.serve(async (req) => {
+  if (req.method !== "POST") return json({ error: "method_not_allowed" }, 405);
+
+  const secret = Deno.env.get("CHARGILY_SECRET_KEY");
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  const expectedLivemode = Deno.env.get("CHARGILY_EXPECTED_LIVEMODE") === "true";
+  if (!secret || !supabaseUrl || !serviceRoleKey) return json({ error: "server_not_configured" }, 500);
+
+  const signature = req.headers.get("signature");
+  const rawBody = await req.text();
+  if (!signature) return json({ error: "missing_signature" }, 400);
+
+  const expectedSignature = await hmacSha256Hex(secret, rawBody);
+  if (!timingSafeEqual(signature.toLowerCase(), expectedSignature.toLowerCase())) {
+    return json({ error: "invalid_signature" }, 403);
+  }
+
+  let event: any;
+  try { event = JSON.parse(rawBody); } catch { return json({ error: "invalid_json" }, 400); }
+
+  if (typeof event?.livemode !== "boolean" || event.livemode !== expectedLivemode) {
+    return json({ error: "livemode_mismatch" }, 403);
+  }
+
+  if (event?.type !== "checkout.paid") return json({ received: true });
+
+  const checkout = event?.data;
+  if (!checkout || checkout.status !== "paid") return json({ error: "invalid_paid_event" }, 400);
+
+  const checkoutId = typeof checkout.id === "string" ? checkout.id : "";
+  const eventId = typeof event.id === "string" ? event.id : "";
+  const amount = typeof checkout.amount === "number" ? checkout.amount : Number(checkout.amount);
+  const currency = typeof checkout.currency === "string" ? checkout.currency : "";
+  const metadata = metadataObject(checkout.metadata);
+  const requestId = typeof metadata.request_id === "string" ? metadata.request_id : "";
+
+  if (!eventId || !checkoutId || !requestId || !Number.isFinite(amount) || currency.toUpperCase() !== "DZD") {
+    return json({ error: "missing_or_invalid_payment_fields" }, 400);
+  }
+
+  const supabase = createClient(supabaseUrl, serviceRoleKey, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+
+  const { data, error } = await supabase.rpc("process_chargily_checkout_paid", {
+    p_event_id: eventId,
+    p_checkout_id: checkoutId,
+    p_request_id: requestId,
+    p_amount: amount,
+    p_currency: currency.toUpperCase(),
+    p_payment_method: typeof checkout.payment_method === "string" ? checkout.payment_method : null,
+  });
+
+  if (error) {
+    console.error("chargily webhook processing failed", error);
+    return json({ error: "payment_processing_failed" }, 500);
+  }
+
+  return json({ received: true, result: data });
+});
