@@ -41,6 +41,26 @@ export async function bootSoukis() {
   }
   init('i18n', () => i18n.installI18n());
 
+  // Handle the return from the payment gateway without trusting the query string as proof of payment.
+  const handlePaymentReturn = () => {
+    const params = new URLSearchParams(window.location.search);
+    const payment = params.get('payment');
+    const requestId = params.get('request_id');
+    if (!payment || !['success', 'failed'].includes(payment)) return;
+
+    const key = payment === 'success' ? 'paymentSuccess' : 'paymentFailed';
+    const message = i18n.t?.(key) || (payment === 'success'
+      ? 'Returned from the payment gateway. Payment status is being verified.'
+      : 'The payment was not completed. You can try again.');
+    const requestHint = requestId ? `<small class="msg">${i18n.t?.('paymentProcessing') || 'Verifying payment status…'}</small>` : '';
+    openModal(`<h2>Soukis</h2><p class="msg">${message}</p>${requestHint}`);
+
+    // Keep the request id out of the visible URL after the return is handled.
+    const cleanUrl = `${window.location.pathname}${window.location.hash}`;
+    window.history.replaceState({}, document.title, cleanUrl);
+  };
+  handlePaymentReturn();
+
   // Load the core marketplace UI before optional features.
   const coreEntries = await Promise.all(modules.slice(1, 4).map(async ([name, loader]) => [name, await load(name, loader)]));
   const core = Object.fromEntries(coreEntries);
