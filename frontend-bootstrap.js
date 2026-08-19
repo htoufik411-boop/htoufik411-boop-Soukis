@@ -69,7 +69,7 @@ export async function bootSoukis() {
         orders.renderMyOrders(document.getElementById('myOrdersList'), result.orders);
       } catch (error) {
         console.error('[Soukis] Orders UI failed', error);
-        openModal(`<h2>${t('myOrders')}</h2><p class="msg">${t('adminLoginRequired')}</p>`);
+        openModal(`<h2>${t('myOrders')}</h2><p class="msg">${t('ordersLoadError')}</p>`);
       }
     });
   });
