@@ -14,4 +14,17 @@ function renderLanguageIcon(lang){const icon=document.getElementById('langIcon')
 
 function applyLanguage(lang){const safeLang=translations[lang]?lang:'ar';const s=translations[safeLang];document.documentElement.lang=safeLang;document.documentElement.dir=safeLang==='ar'?'rtl':'ltr';document.querySelectorAll('[data-i18n]').forEach(el=>{const key=el.dataset.i18n;if(key in s)el.textContent=typeof s[key]==='function'?s[key]():s[key];});document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{const key=el.dataset.i18nPlaceholder;if(key in s)el.placeholder=s[key];});const category=document.querySelector('#category');if(category?.options[0])category.options[0].textContent=s.all;const sort=document.querySelector('#sort');if(sort?.options[0])sort.options[0].textContent=s.latest;const session=document.querySelector('#session');if(session&&!session.dataset.loggedIn)session.textContent=s.notLogged;const select=document.querySelector('#lang');if(select){select.value=safeLang;select.setAttribute('aria-label',s.languageLabel);select.dataset.currentLang=safeLang;Array.from(select.options).forEach(option=>{option.style.fontWeight='700';});select.style.fontWeight='700';}document.querySelector('#cartBtn')?.setAttribute('aria-label',s.cartLabel);document.querySelector('#close')?.setAttribute('aria-label',s.close);renderLanguageIcon(safeLang);localStorage.setItem('soukis-language',safeLang);window.dispatchEvent(new CustomEvent('soukis:language-changed',{detail:{lang:safeLang}}));}
 
-export function installI18n(){const select=document.querySelector('#lang');if(!select)return;const change=()=>applyLanguage(select.value);select.removeEventListener('change',change);select.addEventListener('change',change);select.addEventListener('input',change);applyLanguage(getCurrentLanguage());window.soukisSetLanguage=applyLanguage;}
+export function installI18n(){
+  const select=document.querySelector('#lang');
+  if(!select)return;
+  if(select.dataset.soukisI18nInstalled==='true'){
+    applyLanguage(getCurrentLanguage());
+    return;
+  }
+  const change=()=>applyLanguage(select.value);
+  select.addEventListener('change',change);
+  select.addEventListener('input',change);
+  select.dataset.soukisI18nInstalled='true';
+  applyLanguage(getCurrentLanguage());
+  window.soukisSetLanguage=applyLanguage;
+}
