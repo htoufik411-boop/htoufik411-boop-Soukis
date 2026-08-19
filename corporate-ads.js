@@ -1,0 +1,72 @@
+import { db } from './supabase.js';
+import { getCurrentLanguage, t } from './i18n.js';
+
+const placementLabels = {
+  ar: { listing_feed: 'داخل نتائج المنتجات', homepage: 'الصفحة الرئيسية', top_banner: 'الشريط العلوي', multi_placement: 'أماكن متعددة' },
+  fr: { listing_feed: 'Fil produits', homepage: 'Page d’accueil', top_banner: 'Bannière supérieure', multi_placement: 'Emplacements multiples' },
+  en: { listing_feed: 'Product feed', homepage: 'Homepage', top_banner: 'Top banner', multi_placement: 'Multiple placements' }
+};
+
+const planLabels = {
+  ar: { starter: 'Starter — 7 أيام — 5,000 دج', business: 'Business — 15 يومًا — 9,000 دج', premium: 'Premium — 21 يومًا — 12,000 دج', enterprise: 'Enterprise — 30 يومًا — 15,000 دج' },
+  fr: { starter: 'Starter — 7 jours — 5 000 DZD', business: 'Business — 15 jours — 9 000 DZD', premium: 'Premium — 21 jours — 12 000 DZD', enterprise: 'Enterprise — 30 jours — 15 000 DZD' },
+  en: { starter: 'Starter — 7 days — 5,000 DZD', business: 'Business — 15 days — 9,000 DZD', premium: 'Premium — 21 days — 12,000 DZD', enterprise: 'Enterprise — 30 days — 15,000 DZD' }
+};
+
+const multipliers = { listing_feed: 1, homepage: 2, top_banner: 1.5, multi_placement: 2.5 };
+const bases = { starter: 5000, business: 9000, premium: 12000, enterprise: 15000 };
+
+const labels = {
+  ar: { title: 'إعلانات الشركات', intro: 'روّج علامتك التجارية على Soukis', company: 'اسم الشركة', contact: 'اسم جهة الاتصال', email: 'البريد الإلكتروني', phone: 'الهاتف', adTitle: 'عنوان الإعلان', description: 'وصف الإعلان', url: 'رابط الوجهة', creative: 'رابط الصورة/المادة الإعلانية', placement: 'مكان الإعلان', plan: 'الباقة', total: 'السعر التقديري', submit: 'إرسال طلب الإعلان', login: 'سجّل الدخول أولًا', success: 'تم إرسال طلبك. سيظهر في لوحة الإدارة للمراجعة.', failed: 'تعذر إرسال الطلب.' },
+  fr: { title: 'Publicité d’entreprise', intro: 'Promouvez votre marque sur Soukis', company: 'Nom de l’entreprise', contact: 'Nom du contact', email: 'E-mail', phone: 'Téléphone', adTitle: 'Titre de l’annonce', description: 'Description', url: 'URL de destination', creative: 'URL de la création publicitaire', placement: 'Emplacement', plan: 'Formule', total: 'Prix estimatif', submit: 'Envoyer la demande', login: 'Connectez-vous d’abord', success: 'Demande envoyée. Elle sera examinée par l’administration.', failed: 'Impossible d’envoyer la demande.' },
+  en: { title: 'Corporate advertising', intro: 'Promote your brand on Soukis', company: 'Company name', contact: 'Contact name', email: 'Email', phone: 'Phone', adTitle: 'Ad title', description: 'Description', url: 'Destination URL', creative: 'Creative asset URL', placement: 'Placement', plan: 'Plan', total: 'Estimated price', submit: 'Submit ad request', login: 'Please sign in first', success: 'Request submitted. It will be reviewed by the admin.', failed: 'Could not submit the request.' }
+};
+
+function lang() { return getCurrentLanguage(); }
+function money(value) { return new Intl.NumberFormat(lang() === 'ar' ? 'ar-DZ' : lang() === 'fr' ? 'fr-DZ' : 'en-DZ').format(value) + ' DZD'; }
+
+export function installCorporateAds({ openModal } = {}) {
+  const button = document.getElementById('corporateAdsBtn');
+  if (!button || !openModal || button.dataset.installed === 'true') return;
+  button.dataset.installed = 'true';
+
+  const render = async () => {
+    const l = lang(); const x = labels[l];
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) { openModal(`<h2>${x.title}</h2><p class="msg">${x.login}</p>`); return; }
+    const plans = planLabels[l]; const places = placementLabels[l];
+    openModal(`<h2>${x.title}</h2><p>${x.intro}</p><form id="corporateAdForm" class="form">
+      <input name="company" placeholder="${x.company}" autocomplete="organization" required>
+      <input name="contact" placeholder="${x.contact}" autocomplete="name" required>
+      <input name="email" type="email" placeholder="${x.email}" value="${user.email || ''}" autocomplete="email" required>
+      <input name="phone" placeholder="${x.phone}" autocomplete="tel">
+      <input name="title" placeholder="${x.adTitle}" required>
+      <textarea name="description" placeholder="${x.description}" rows="3"></textarea>
+      <input name="url" type="url" placeholder="${x.url}">
+      <input name="creative" type="url" placeholder="${x.creative}">
+      <select name="placement" id="corporatePlacement" required>${Object.entries(places).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>
+      <select name="plan" id="corporatePlan" required>${Object.entries(plans).map(([k,v])=>`<option value="${k}">${v}</option>`).join('')}</select>
+      <div class="msg"><strong>${x.total}:</strong> <span id="corporateTotal">${money(bases.starter)}</span></div>
+      <button class="blue" type="submit">${x.submit}</button><div id="corporateMsg" class="msg" aria-live="polite"></div>
+    </form>`);
+    const form = document.getElementById('corporateAdForm'); const total = document.getElementById('corporateTotal');
+    const updateTotal = () => { const plan = form.plan.value; const placement = form.placement.value; total.textContent = money(bases[plan] * multipliers[placement]); };
+    form.plan.addEventListener('change', updateTotal); form.placement.addEventListener('change', updateTotal);
+    form.addEventListener('submit', async e => {
+      e.preventDefault(); const f = new FormData(form); const msg = document.getElementById('corporateMsg');
+      msg.textContent = '';
+      const { error } = await db.rpc('create_corporate_ad_request', {
+        p_company_name: String(f.get('company') || ''), p_contact_name: String(f.get('contact') || ''), p_contact_email: String(f.get('email') || ''), p_contact_phone: String(f.get('phone') || ''),
+        p_ad_title: String(f.get('title') || ''), p_ad_description: String(f.get('description') || ''), p_destination_url: String(f.get('url') || ''),
+        p_placement: String(f.get('placement') || ''), p_plan: String(f.get('plan') || ''), p_creative_url: String(f.get('creative') || '')
+      });
+      msg.textContent = error ? `${x.failed} ${error.message}` : x.success;
+      if (!error) form.reset();
+      updateTotal();
+    });
+  };
+
+  button.addEventListener('click', render);
+  window.addEventListener('soukis:language-changed', () => { button.textContent = t('corporateAds'); });
+  button.textContent = t('corporateAds');
+}
