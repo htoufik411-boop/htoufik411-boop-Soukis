@@ -19,11 +19,9 @@ async function startCheckout(plan, openModal) {
   const { data: { user } } = await db.auth.getUser();
   if (!user) { openModal(`<h2>${copy.title}</h2><p class="msg">${lang === 'fr' ? 'Connectez-vous d’abord.' : lang === 'en' ? 'Please sign in first.' : 'سجّل الدخول أولًا.'}</p>`); return; }
   openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.loading}</p>`);
-  const { data: payment, error } = await db.rpc('create_pending_payment', { p_plan: plan, p_listing_id: null });
-  if (error || !payment) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}</p>`); return; }
-  const paymentId = typeof payment === 'string' ? payment : payment.id || payment.payment_id;
-  if (!paymentId) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}</p>`); return; }
-  const { data, error: checkoutError } = await db.functions.invoke('seller-chargily-checkout', { body: { payment_id: paymentId, payment_method: 'edahabia' } });
+  const { data: paymentId, error } = await db.rpc('create_seller_pending_payment', { p_plan: plan, p_method: 'edahabia' });
+  if (error || !paymentId) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}</p>`); return; }
+  const { data, error: checkoutError } = await db.functions.invoke('seller-chargily-checkout-v2', { body: { payment_id: paymentId, payment_method: 'edahabia' } });
   if (checkoutError || !data?.checkout_url) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}</p>`); return; }
   window.location.href = data.checkout_url;
 }
