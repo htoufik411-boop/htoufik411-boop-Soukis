@@ -6,7 +6,7 @@ const modules = [
   ['monetization', () => import('./monetization.js?v=20260820-payment3')],
   ['corporate-ads', () => import('./corporate-ads.js')],
   ['corporate-ads-display', () => import('./corporate-ads-display.js?v=20260820-ads1')],
-  ['my-products', () => import('./my-products.js')],
+  ['my-products', () => import('./my-products.js?v=20260820-myproducts2')],
   ['orders', () => import('./my-orders.js')],
   ['admin', () => import('./admin.js')],
   ['auth', () => import('./auth.js')],
