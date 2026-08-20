@@ -8,7 +8,8 @@ const modules = [
   ['my-products', () => import('./my-products.js')],
   ['orders', () => import('./my-orders.js')],
   ['admin', () => import('./admin.js')],
-  ['auth', () => import('./auth.js')]
+  ['auth', () => import('./auth.js')],
+  ['subscription-status', () => import('./subscription-status.js?v=20260820-status1')]
 ];
 
 const load = async (name, loader) => { try { return await loader(); } catch (error) { console.error(`[Soukis] ${name} failed to load`, error); return null; } };
@@ -27,6 +28,7 @@ export async function bootSoukis() {
   init('my-products',()=>{if(!optional['my-products']?.openMyProducts)return;document.getElementById('myProductsBtn')?.addEventListener('click',()=>optional['my-products'].openMyProducts(openModal,closeModal));});
   init('admin',()=>optional.admin?.initAdmin?.()); init('auth',()=>optional.auth?.initAuth?.({openModal,closeModal}));
   init('orders',()=>{const orders=optional.orders;if(!orders?.getMyOrders||!orders?.renderMyOrders||document.getElementById('myOrdersBtn'))return;const t=i18n.t||(k=>k),button=document.createElement('button');button.id='myOrdersBtn';button.className='pill';button.dataset.i18n='myOrders';button.textContent=t('myOrders');document.querySelector('.userbar')?.appendChild(button);button.addEventListener('click',async()=>{try{const result=await orders.getMyOrders();if(!result.ok){openModal(`<h2>${t('myOrders')}</h2><p class="msg">${t('adminLoginRequired')}</p>`);return;}openModal(`<h2>${t('myOrders')}</h2><div id="myOrdersList"></div>`);orders.renderMyOrders(document.getElementById('myOrdersList'),result.orders);}catch(error){console.error('[Soukis] Orders UI failed',error);openModal(`<h2>${t('myOrders')}</h2><p class="msg">${t('ordersLoadError')}</p>`);}});});
+  init('subscription-status',()=>optional['subscription-status']?.installSubscriptionStatus?.());
   window.addEventListener('soukis:language-changed',()=>{const lang=i18n.getCurrentLanguage?.()||document.documentElement.lang||'ar';document.querySelectorAll('[data-i18n]').forEach(el=>{const key=el.dataset.i18n;if(key&&i18n.t)el.textContent=i18n.t(key);});document.querySelectorAll('[data-i18n-placeholder]').forEach(el=>{const key=el.dataset.i18nPlaceholder;if(key&&i18n.t)el.placeholder=i18n.t(key);});document.documentElement.dir=lang==='ar'?'rtl':'ltr';});
 }
 window.addEventListener('DOMContentLoaded',()=>bootSoukis().catch(error=>{console.error('[Soukis] fatal bootstrap error',error);const modal=document.getElementById('modal'),body=document.getElementById('modalBody');if(modal&&body){body.innerHTML='<h2>Soukis</h2><p class="msg">تعذر تشغيل الواجهة. أعد تحميل الصفحة.</p>';modal.hidden=false;}}),{once:true});
