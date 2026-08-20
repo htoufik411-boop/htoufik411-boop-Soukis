@@ -1,4 +1,5 @@
 name: Deploy Soukis to GitHub Pages
+# Ensure the latest main revision is deployed
 
 on:
   push:
