@@ -11,19 +11,26 @@ const plans = {
 const money = new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: SOUKIS_PRICING.currency, maximumFractionDigits: 0 });
 const getLang = () => document.getElementById('lang')?.value || 'ar';
 const benefitsMarkup = benefits => `<ul style="margin:14px 0 0;padding-inline-start:22px;display:grid;gap:7px">${benefits.map(item => `<li>${item}</li>`).join('')}</ul>`;
+let checkoutInFlight = false;
 
 async function startCheckout(plan, openModal) {
+  if (checkoutInFlight) return;
+  checkoutInFlight = true;
   const lang = getLang();
   const copy = plans[plan][lang] || plans[plan].ar;
   const ui = lang === 'fr' ? { pay:'Paiement', loading:'Création du paiement…', failed:'Impossible de créer le paiement.' } : lang === 'en' ? { pay:'Payment', loading:'Creating payment…', failed:'Could not create the payment.' } : { pay:'الدفع', loading:'جارٍ إنشاء عملية الدفع…', failed:'تعذر إنشاء عملية الدفع.' };
-  const { data: { user } } = await db.auth.getUser();
-  if (!user) { openModal(`<h2>${copy.title}</h2><p class="msg">${lang === 'fr' ? 'Connectez-vous d’abord.' : lang === 'en' ? 'Please sign in first.' : 'سجّل الدخول أولًا.'}</p>`); return; }
-  openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.loading}</p>`);
-  const { data: paymentId, error } = await db.rpc('create_seller_pending_payment', { p_plan: plan, p_method: 'edahabia' });
-  if (error || !paymentId) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}</p>`); return; }
-  const { data, error: checkoutError } = await db.functions.invoke('seller-chargily-checkout-v2', { body: { payment_id: paymentId, payment_method: 'edahabia' } });
-  if (checkoutError || !data?.checkout_url) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}</p>`); return; }
-  window.location.href = data.checkout_url;
+  try {
+    const { data: { user } } = await db.auth.getUser();
+    if (!user) { openModal(`<h2>${copy.title}</h2><p class="msg">${lang === 'fr' ? 'Connectez-vous d’abord.' : lang === 'en' ? 'Please sign in first.' : 'سجّل الدخول أولًا.'}</p>`); return; }
+    openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.loading}</p>`);
+    const { data: paymentId, error } = await db.rpc('create_seller_pending_payment', { p_plan: plan, p_method: 'edahabia' });
+    if (error || !paymentId) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}</p>`); return; }
+    const { data, error: checkoutError } = await db.functions.invoke('seller-chargily-checkout-v2', { body: { payment_id: paymentId, payment_method: 'edahabia' } });
+    if (checkoutError || !data?.checkout_url) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}</p>`); return; }
+    window.location.href = data.checkout_url;
+  } finally {
+    checkoutInFlight = false;
+  }
 }
 
 export function installMonetization({ openModal }) {
