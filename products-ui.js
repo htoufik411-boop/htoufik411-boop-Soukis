@@ -35,12 +35,22 @@ export function installProductsUI(){
  async function load(){
   const generation=++loadGeneration;
   grid.innerHTML=`<div class="empty">${text('جاري تحميل المنتجات…','Chargement des produits…','Loading products…')}</div>`;
-  const [listingResult,catResult,cityResult]=await Promise.all([db.from('listings').select('*').order('created_at',{ascending:false}),db.from('categories').select('id,name_ar,name_fr,name_en').order('name_en'),db.from('cities').select('id,name_ar,name_fr,name_en').order('name_en')]);
-  if(generation!==loadGeneration)return;
-  if(listingResult.error){console.error('Soukis listings load failed:',listingResult.error);grid.innerHTML=`<div class="empty">${text('تعذر تحميل المنتجات. تحقق من إعدادات Supabase.','Impossible de charger les produits. Vérifiez Supabase.','Could not load products. Check Supabase settings.')}`;return;}
-  if(catResult.error)console.error('Soukis categories load failed:',catResult.error);
-  if(cityResult.error)console.error('Soukis cities load failed:',cityResult.error);
-  listings=listingResult.data||[];categories=catResult.error?[]:(catResult.data||[]);cities=cityResult.error?[]:(cityResult.data||[]);fillFilters(false);
+  try {
+   const [listingResult,catResult,cityResult]=await Promise.all([
+    db.from('listings').select('*').order('created_at',{ascending:false}),
+    db.from('categories').select('id,name_ar,name_fr,name_en').order('name_en'),
+    db.from('cities').select('id,name_ar,name_fr,name_en').order('name_en')
+   ]);
+   if(generation!==loadGeneration)return;
+   if(listingResult.error){console.error('Soukis listings load failed:',listingResult.error);grid.innerHTML=`<div class="empty">${text('تعذر تحميل المنتجات. تحقق من إعدادات Supabase.','Impossible de charger les produits. Vérifiez Supabase.','Could not load products. Check Supabase settings.')}`;return;}
+   if(catResult.error)console.error('Soukis categories load failed:',catResult.error);
+   if(cityResult.error)console.error('Soukis cities load failed:',cityResult.error);
+   listings=listingResult.data||[];categories=catResult.error?[]:(catResult.data||[]);cities=cityResult.error?[]:(cityResult.data||[]);fillFilters(false);
+  } catch(error) {
+   if(generation!==loadGeneration)return;
+   console.error('Soukis products load failed:',error);
+   grid.innerHTML=`<div class="empty">${text('تعذر تحميل المنتجات حاليًا. حاول تحديث الصفحة.','Impossible de charger les produits pour le moment. Actualisez la page.','Products could not be loaded right now. Refresh the page and try again.')}`;
+  }
  }
  function fillFilters(preserve){
   const oldCategory=category?.value||'',oldSort=sort?.value||'';
