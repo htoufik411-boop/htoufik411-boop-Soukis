@@ -22,13 +22,20 @@ Deno.serve(async(req)=>{
     if(!["edahabia","cib","chargily_app"].includes(method))return json({error:"invalid_payment_method"},400);
     const {data:prepared,error:prepError}=await sb.rpc("prepare_seller_chargily_checkout",{p_payment_id:paymentId});
     if(prepError||!prepared)return json({error:"checkout_preparation_failed"},400);
-    const origin=req.headers.get("origin")||"https://htoufik411-boop.github.io";
-    const base=Deno.env.get("CHARGILY_API_BASE_URL")||(Deno.env.get("CHARGILY_LIVE")==="true"||key.startsWith("live_")?"https://pay.chargily.net/api/v2":"https://pay.chargily.net/test/api/v2");
-    const res=await fetch(`${base.replace(/\/$/,"")}/checkouts`,{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify({amount:prepared.amount_dzd,currency:"dzd",payment_method:method,success_url:`${origin}/?payment=success&payment_id=${encodeURIComponent(paymentId)}`,failure_url:`${origin}/?payment=failed&payment_id=${encodeURIComponent(paymentId)}`,webhook_endpoint:`${url}/functions/v1/chargily-webhook`,description:`Soukis ${prepared.plan} ${paymentId}`,locale:"ar",metadata:[{payment_id:paymentId,user_id:user.id,plan:prepared.plan}]})});
+
+    // The Chargily key determines the mode. Do not let a stale CHARGILY_API_BASE_URL
+    // override the live/test endpoint and create a key/endpoint mismatch.
+    const base=key.startsWith("live_")
+      ? "https://pay.chargily.net/api/v2"
+      : "https://pay.chargily.net/test/api/v2";
+    const origin=req.headers.get("origin")||"https://htoufik411-boop.github.io/htoufik411-boop-Soukis";
+    const res=await fetch(`${base}/checkouts`,{method:"POST",headers:{Authorization:`Bearer ${key}`,"Content-Type":"application/json"},body:JSON.stringify({amount:Number(prepared.amount_dzd),currency:"dzd",payment_method:method,success_url:`${origin}/?payment=success&payment_id=${encodeURIComponent(paymentId)}`,failure_url:`${origin}/?payment=failed&payment_id=${encodeURIComponent(paymentId)}`,webhook_endpoint:`${url}/functions/v1/chargily-webhook`,description:`Soukis ${prepared.plan} ${paymentId}`,locale:"ar",metadata:[{payment_id:paymentId,user_id:user.id,plan:prepared.plan}]})});
     const checkout=await res.json().catch(()=>null);
-    if(!res.ok||!checkout?.id||!checkout?.checkout_url){console.error("Chargily seller checkout creation failed",res.status,checkout);return json({error:"provider_checkout_creation_failed"},502)}
+    if(!res.ok||!checkout?.id||!checkout?.checkout_url){
+      console.error("Chargily seller checkout creation failed",res.status,checkout);
+      return json({error:"provider_checkout_creation_failed",provider_status:res.status,provider_message:typeof checkout?.message==="string"?checkout.message:null},502);
+    }
     const {error:bindError}=await sb.rpc("bind_seller_chargily_checkout",{p_payment_id:paymentId,p_creation_token:prepared.creation_token,p_checkout_id:checkout.id});
     if(bindError)return json({error:"checkout_binding_failed"},500);
     return json({status:"bound",payment_id:paymentId,checkout_id:checkout.id,checkout_url:checkout.checkout_url});
-  }catch(e){console.error(e);return json({error:"internal_error"},500)}
-});
+  }catch(e){console.error(e);return json({error:"internal_error"},500)}});
