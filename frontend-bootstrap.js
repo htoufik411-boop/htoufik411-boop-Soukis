@@ -5,6 +5,7 @@ const modules = [
   ['integration', () => import('./soukis-integration.js')],
   ['monetization', () => import('./monetization.js?v=20260820-payment3')],
   ['corporate-ads', () => import('./corporate-ads.js')],
+  ['corporate-ads-display', () => import('./corporate-ads-display.js?v=20260820-ads1')],
   ['my-products', () => import('./my-products.js')],
   ['orders', () => import('./my-orders.js')],
   ['admin', () => import('./admin.js')],
@@ -24,7 +25,7 @@ export async function bootSoukis() {
   const coreEntries=await Promise.all(modules.slice(1,4).map(async([name,loader])=>[name,await load(name,loader)])),core=Object.fromEntries(coreEntries);
   init('cart',()=>core.cart?.installCartBridge?.()); init('products',()=>core.products?.installProductsUI?.()); init('integration',()=>core.integration?.installSoukisIntegration?.({openModal,closeModal}));
   const optionalEntries=await Promise.all(modules.slice(4).map(async([name,loader])=>[name,await load(name,loader)])),optional=Object.fromEntries(optionalEntries);
-  init('monetization',()=>optional.monetization?.installMonetization?.({openModal})); init('corporate-ads',()=>optional['corporate-ads']?.installCorporateAds?.({openModal}));
+  init('monetization',()=>optional.monetization?.installMonetization?.({openModal})); init('corporate-ads',()=>optional['corporate-ads']?.installCorporateAds?.({openModal})); init('corporate-ads-display',()=>optional['corporate-ads-display']?.installCorporateAdsDisplay?.());
   init('my-products',()=>{if(!optional['my-products']?.openMyProducts)return;document.getElementById('myProductsBtn')?.addEventListener('click',()=>optional['my-products'].openMyProducts(openModal,closeModal));});
   init('admin',()=>optional.admin?.initAdmin?.()); init('auth',()=>optional.auth?.initAuth?.({openModal,closeModal}));
   init('orders',()=>{const orders=optional.orders;if(!orders?.getMyOrders||!orders?.renderMyOrders||document.getElementById('myOrdersBtn'))return;const t=i18n.t||(k=>k),button=document.createElement('button');button.id='myOrdersBtn';button.className='pill';button.dataset.i18n='myOrders';button.textContent=t('myOrders');document.querySelector('.userbar')?.appendChild(button);button.addEventListener('click',async()=>{try{const result=await orders.getMyOrders();if(!result.ok){openModal(`<h2>${t('myOrders')}</h2><p class="msg">${t('adminLoginRequired')}</p>`);return;}openModal(`<h2>${t('myOrders')}</h2><div id="myOrdersList"></div>`);orders.renderMyOrders(document.getElementById('myOrdersList'),result.orders);}catch(error){console.error('[Soukis] Orders UI failed',error);openModal(`<h2>${t('myOrders')}</h2><p class="msg">${t('ordersLoadError')}</p>`);}});});
