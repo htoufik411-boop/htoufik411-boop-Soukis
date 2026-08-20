@@ -7,12 +7,14 @@
 </head>
 <body>
 <header><a class="logo" href="#">Soukis<span>•</span></a><nav><a href="#products" data-i18n="store">المتجر</a><a href="#categories" data-i18n="categories">الفئات</a></nav><div class="actions"><div class="language-switcher"><span id="langIcon" class="language-icon" aria-hidden="true">🇩🇿</span><select id="lang" aria-label="اللغة"><option value="ar">العربية</option><option value="fr">Français</option><option value="en">English</option></select></div><button class="dark" id="admin" data-i18n="admin">Admin</button></div></header>
+<div id="corporateAdsTop" class="corporate-ads-host" hidden></div>
 <div class="userbar"><span class="pill" id="session" data-i18n="notLogged">غير مسجل</span><button class="blue" id="authBtn" data-i18n="login">تسجيل الدخول</button><button class="dark" id="sellBtn" data-i18n="sell">+ أضف منتجاً</button><button id="myProductsBtn" data-i18n="myProducts">منتجاتي</button><button id="corporateAdsBtn" class="pill" data-i18n="corporateAds">إعلانات الشركات</button><button id="cartBtn" class="cart" aria-label="السلة">🛒 <span id="cartCount">0</span></button></div>
 <main><section class="hero"><div><small style="color:#93c5fd;font-weight:900" data-i18n="heroKicker">سوق واحد. عالم كامل.</small><h1 data-i18n="heroTitle">اكتشف ما تحب، وبِع ما تملك.</h1><p data-i18n="heroText">منصة عصرية للشراء والبيع، مفتوحة للجميع حول العالم.</p><div class="buttons"><button class="light" id="heroSell" data-i18n="sell">+ أضف منتجاً</button><a class="ghost btn" href="#products" data-i18n="explore">استكشف المنتجات</a></div></div><div class="art"><div><b>✦</b><strong>Soukis</strong><div style="color:#93c5fd">Marketplace</div></div></div></section>
+<div id="corporateAdsHomepage" class="corporate-ads-host" hidden></div>
 <div class="search"><input id="search" data-i18n-placeholder="search" placeholder="ابحث عن منتج أو فئة..."><select id="category"><option value="" data-i18n="all">كل الفئات</option></select><select id="sort"><option value="" data-i18n="latest">الأحدث</option></select></div>
 <section class="section" id="categories"><div class="section-head"><small data-i18n="catKicker">تسوق حسب الفئة</small><h2 data-i18n="catTitle">الفئات</h2></div><div class="cats" id="cats"></div></section>
-<section class="section" id="products"><div class="section-head"><small data-i18n="productKicker">منتجات حقيقية</small><h2 data-i18n="productTitle">اكتشف الجديد</h2><span id="count"></span></div><div class="products" id="grid"></div></section></main>
+<section class="section" id="products"><div class="section-head"><small data-i18n="productKicker">منتجات حقيقية</small><h2 data-i18n="productTitle">اكتشف الجديد</h2><span id="count"></span></div><div id="corporateAdsFeed" class="corporate-ads-host" hidden></div><div class="products" id="grid"></div></section></main>
 <footer data-i18n="footer">Soukis — سوق عالمي بسيط، سريع، ومفتوح للجميع.</footer>
 <div class="modal" id="modal" hidden><div class="box"><button class="close" id="close" aria-label="إغلاق">×</button><div id="modalBody"></div><div id="admin-status" class="admin-status" aria-live="polite"></div></div></div>
-<script type="module" src="./frontend-bootstrap.js?v=20260820-payment-fix"></script>
+<script type="module" src="./frontend-bootstrap.js?v=20260820-ads1"></script>
 </body></html>
