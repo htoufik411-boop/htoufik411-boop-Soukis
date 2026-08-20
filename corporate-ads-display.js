@@ -30,17 +30,17 @@ export async function installCorporateAdsDisplay() {
   window.__soukisCorporateAdsDisplay = true;
   const load = async () => {
     try {
-      const [home, top, feed] = await Promise.all([
-        db.rpc('get_active_corporate_ads', { p_placement: 'homepage' }),
-        db.rpc('get_active_corporate_ads', { p_placement: 'top_banner' }),
-        db.rpc('get_active_corporate_ads', { p_placement: 'listing_feed' })
-      ]);
-      if (home.error) console.error('[Soukis] homepage ads failed', home.error);
-      if (top.error) console.error('[Soukis] top banner ads failed', top.error);
-      if (feed.error) console.error('[Soukis] feed ads failed', feed.error);
-      mount('corporateAdsHomepage', home.data || []);
-      mount('corporateAdsTop', top.data || []);
-      mount('corporateAdsFeed', feed.data || []);
+      const placements = ['homepage', 'top_banner', 'listing_feed', 'multi_placement'];
+      const results = await Promise.all(
+        placements.map(p_placement => db.rpc('get_active_corporate_ads', { p_placement }))
+      );
+      results.forEach((result, index) => {
+        if (result.error) console.error(`[Soukis] ${placements[index]} ads failed`, result.error);
+      });
+      const [home, top, feed, multi] = results;
+      mount('corporateAdsHomepage', [...(home.data || []), ...(multi.data || [])]);
+      mount('corporateAdsTop', [...(top.data || []), ...(multi.data || [])]);
+      mount('corporateAdsFeed', [...(feed.data || []), ...(multi.data || [])]);
     } catch (error) { console.error('[Soukis] corporate ads display failed', error); }
   };
   await load();
