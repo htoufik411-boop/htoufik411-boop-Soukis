@@ -1,18 +1,15 @@
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
-import { SOUKIS_CONFIG } from './app-config.js';
-
-const supabase = createClient(SOUKIS_CONFIG.supabaseUrl, SOUKIS_CONFIG.supabasePublishableKey);
+import { db } from './supabase.js';
 
 export async function isAdmin() {
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await db.auth.getUser();
   if (!user) return false;
-  const { data, error } = await supabase.rpc('is_admin');
+  const { data, error } = await db.rpc('is_admin');
   return !error && data === true;
 }
 
 export async function getAdminOrders() {
   if (!(await isAdmin())) return { ok: false, reason: 'admin_required', orders: [] };
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('orders')
     .select('id,user_id,status,total,currency,shipping_name,shipping_phone,shipping_address,created_at')
     .order('created_at', { ascending: false });
@@ -24,7 +21,7 @@ export async function updateOrderStatus(orderId, status) {
   if (!allowed.includes(status)) return { ok: false, reason: 'invalid_status' };
   if (!(await isAdmin())) return { ok: false, reason: 'admin_required' };
 
-  const { data, error } = await supabase
+  const { data, error } = await db
     .from('orders')
     .update({ status })
     .eq('id', orderId)
