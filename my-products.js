@@ -8,8 +8,15 @@ export async function openMyProducts(openModal,closeModal){
   const {data:{user}}=await db.auth.getUser();
   if(!user){openModal(`<h2>${text('منتجاتي','Mes produits','My products')}</h2><p class="msg">${text('سجّل الدخول أولًا.','Connectez-vous d’abord.','Please sign in first.')}</p>`);return;}
   openModal(`<h2>${text('منتجاتي','Mes produits','My products')}</h2><p class="msg">${text('جاري التحميل…','Chargement…','Loading…')}</p>`);
-  const {data,error}=await db.from('listings').select('id,title,price,currency,category_id,city_id,image_url,description,created_at,status,promotion_type,promoted_until,featured').eq('user_id',user.id).order('created_at',{ascending:false});
-  if(error){openModal(`<h2>${text('منتجاتي','Mes produits','My products')}</h2><p class="msg">${text('تعذر تحميل منتجاتك.','Impossible de charger vos produits.','Could not load your products.')}</p>`);return;}
+  const extendedSelect='id,title,price,currency,category_id,city_id,image_url,description,created_at,status,promotion_type,promoted_until,featured';
+  const baseSelect='id,title,price,currency,image_url,description,created_at,status';
+  let {data,error}=await db.from('listings').select(extendedSelect).eq('user_id',user.id).order('created_at',{ascending:false});
+  if(error){
+    console.error('[Soukis] My Products extended query failed; retrying with base fields',error);
+    const fallback=await db.from('listings').select(baseSelect).eq('user_id',user.id).order('created_at',{ascending:false});
+    data=fallback.data; error=fallback.error;
+  }
+  if(error){console.error('[Soukis] My Products load failed',error);openModal(`<h2>${text('منتجاتي','Mes produits','My products')}</h2><p class="msg">${text('تعذر تحميل منتجاتك.','Impossible de charger vos produits.','Could not load your products.')}</p>`);return;}
   if(!data?.length){openModal(`<h2>${text('منتجاتي','Mes produits','My products')}</h2><div class="empty">${text('لم تنشر أي منتج بعد.','Vous n’avez encore publié aucun produit.','You have not published any products yet.')}</div>`);return;}
   const locale=getCurrentLanguage()==='ar'?'ar-DZ':getCurrentLanguage()==='fr'?'fr-FR':'en-US';
   const now=Date.now();
