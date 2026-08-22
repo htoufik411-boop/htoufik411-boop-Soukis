@@ -7,12 +7,10 @@ const plans = {
   max: { ar: { title: '🔥 Max', text: 'باقة أقوى للبائعين النشطين مع ظهور أعلى ومزايا نمو متقدمة.', duration: '21 يومًا', benefits: ['ظهور أعلى من Premium', 'إبراز أقوى للمنتجات', 'أدوات بائع متقدمة'] }, fr: { title: '🔥 Max', text: 'Une formule plus puissante pour les vendeurs actifs avec davantage de visibilité et d’outils.', duration: '21 jours', benefits: ['Visibilité supérieure à Premium', 'Mise en avant renforcée', 'Outils vendeur avancés'] }, en: { title: '🔥 Max', text: 'A stronger plan for active sellers with higher visibility and advanced seller tools.', duration: '21 days', benefits: ['Higher visibility than Premium', 'Stronger featured placement', 'Advanced seller tools'] } },
   max_pro: { ar: { title: '👑 Max Pro', text: 'أعلى باقة للبائعين المحترفين مع أقصى مستوى من الظهور والمزايا.', duration: '30 يومًا', benefits: ['أقصى مستوى من الظهور', 'أولوية في إبراز المنتجات', 'جميع مزايا الباقات الأدنى'] }, fr: { title: '👑 Max Pro', text: 'La formule la plus complète pour les vendeurs professionnels avec le maximum de visibilité et d’avantages.', duration: '30 jours', benefits: ['Visibilité maximale', 'Priorité de mise en avant', 'Tous les avantages des formules inférieures'] }, en: { title: '👑 Max Pro', text: 'The most complete plan for professional sellers with maximum visibility and benefits.', duration: '30 days', benefits: ['Maximum visibility', 'Priority featured placement', 'All lower-tier benefits'] } }
 };
-
 const money = new Intl.NumberFormat('fr-DZ', { style: 'currency', currency: SOUKIS_PRICING.currency, maximumFractionDigits: 0 });
 const getLang = () => document.getElementById('lang')?.value || 'ar';
 const benefitsMarkup = benefits => `<ul style="margin:14px 0 0;padding-inline-start:22px;display:grid;gap:7px">${benefits.map(item => `<li>${item}</li>`).join('')}</ul>`;
 let checkoutInFlight = false;
-
 function checkoutErrorMessage(error, data, lang) {
   const providerMessage = data?.provider_message || data?.message || error?.message;
   const providerCode = data?.provider_code;
@@ -24,7 +22,6 @@ function checkoutErrorMessage(error, data, lang) {
   const status = providerStatus ? ` (${providerStatus}${providerCode ? ` · ${providerCode}` : ''})` : '';
   return `${prefix}${status}: ${detail}`;
 }
-
 async function startCheckout(plan, openModal) {
   if (checkoutInFlight) return;
   checkoutInFlight = true;
@@ -44,11 +41,8 @@ async function startCheckout(plan, openModal) {
       return;
     }
     window.location.href = data.checkout_url;
-  } finally {
-    checkoutInFlight = false;
-  }
+  } finally { checkoutInFlight = false; }
 }
-
 export function installMonetization({ openModal }) {
   const bar = document.querySelector('.userbar');
   if (!bar || bar.querySelector('#boostBtn')) return;
