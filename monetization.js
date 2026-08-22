@@ -13,6 +13,18 @@ const getLang = () => document.getElementById('lang')?.value || 'ar';
 const benefitsMarkup = benefits => `<ul style="margin:14px 0 0;padding-inline-start:22px;display:grid;gap:7px">${benefits.map(item => `<li>${item}</li>`).join('')}</ul>`;
 let checkoutInFlight = false;
 
+function checkoutErrorMessage(error, data, lang) {
+  const providerMessage = data?.provider_message || data?.message || error?.message;
+  const providerCode = data?.provider_code;
+  const providerStatus = data?.provider_status;
+  const providerErrors = data?.provider_errors;
+  const detail = providerMessage || (providerErrors ? JSON.stringify(providerErrors) : '') || error?.message || '';
+  if (!detail && !providerStatus) return lang === 'fr' ? 'Impossible de créer le paiement.' : lang === 'en' ? 'Could not create the payment.' : 'تعذر إنشاء عملية الدفع.';
+  const prefix = lang === 'fr' ? 'Erreur Chargily' : lang === 'en' ? 'Chargily error' : 'خطأ Chargily';
+  const status = providerStatus ? ` (${providerStatus}${providerCode ? ` · ${providerCode}` : ''})` : '';
+  return `${prefix}${status}: ${detail}`;
+}
+
 async function startCheckout(plan, openModal) {
   if (checkoutInFlight) return;
   checkoutInFlight = true;
@@ -24,9 +36,13 @@ async function startCheckout(plan, openModal) {
     if (!user) { openModal(`<h2>${copy.title}</h2><p class="msg">${lang === 'fr' ? 'Connectez-vous d’abord.' : lang === 'en' ? 'Please sign in first.' : 'سجّل الدخول أولًا.'}</p>`); return; }
     openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.loading}</p>`);
     const { data: paymentId, error } = await db.rpc('create_seller_pending_payment', { p_plan: plan, p_method: 'edahabia' });
-    if (error || !paymentId) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}</p>`); return; }
+    if (error || !paymentId) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}${error?.message ? ` ${error.message}` : ''}</p>`); return; }
     const { data, error: checkoutError } = await db.functions.invoke('seller-chargily-checkout-v2', { body: { payment_id: paymentId, payment_method: 'edahabia' } });
-    if (checkoutError || !data?.checkout_url) { openModal(`<h2>${ui.pay}</h2><p class="msg">${ui.failed}</p>`); return; }
+    if (checkoutError || !data?.checkout_url) {
+      const message = checkoutErrorMessage(checkoutError, data, lang);
+      openModal(`<h2>${ui.pay}</h2><p class="msg" style="white-space:pre-wrap;overflow-wrap:anywhere">${message}</p>`);
+      return;
+    }
     window.location.href = data.checkout_url;
   } finally {
     checkoutInFlight = false;
